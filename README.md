@@ -21,21 +21,21 @@ The TwinCat project includes simulation where simplified real-world industrial l
 ![simulation-pic](docs/Mqtt-simulation-pic.PNG)
 
 
-# Preparing PLC variable for OPC UA.
+## Preparing PLC variable for OPC UA.
 Data which should be exposed on OPC UA server are prepared as `STRUCT` data type.
  
 Below example of pragma declaration for humidity sensor: 
 ```
-{attribute 'OPC.UA.DA' := '1'}			// enable/disable to OPC UA
-{attribute 'OPC.UA.DA.Access' := '1'}		// read only
-{attribute 'OPC.UA.DA.StructuredType' := '1'}	// define variable as STRUCT for OPC UA
-HumiditySensorStruct				: SingleSensor_DataModel;
+{attribute 'OPC.UA.DA' := '1'}                  // enable/disable to OPC UA
+{attribute 'OPC.UA.DA.Access' := '1'}           // read only
+{attribute 'OPC.UA.DA.StructuredType' := '1'}   // define variable as STRUCT for OPC UA
+HumiditySensorStruct                            : SingleSensor_DataModel;
 ```
 
-# OPC UA namespace and reference
+## OPC UA namespace and reference
 
 OPC client needs node reference and namespace of variable which it should request.
 These information is not directly available in TwinCat.
 The exact `NodeId` can be determined by some OPC UA browser, below example from Prosys OPC UA client:
 
-![system diagram](./docs/namespace_node.png)
+![namespace_nodeid](./docs/namespace_node.png)
