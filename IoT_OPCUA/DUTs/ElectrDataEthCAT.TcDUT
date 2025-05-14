@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <DUT Name="ElectrDataEthCAT" Id="{f69fd52c-fd38-4e3d-a7ed-2ad21f04a97b}">
+    <Declaration><![CDATA[TYPE ElectrDataEthCAT :
+STRUCT
+	//Power Measurement Data
+	// ************* total measurements ***********
+	ActPowerTot		:REAL;
+	ReactPowerTot	:REAL;
+	ApparPowerTot	:REAL;
+	PowerFact		:REAL;
+	PQF				:REAL;	// power quality factor
+	
+	//************* L1 phase data *****************
+	ActPowerL1		:REAL;
+	ReactPowerL1	:REAL;
+	ApparPowerL1	:REAL;
+	
+	CurrentL1		:REAL;
+	VoltL1			:REAL;
+	PowFactL1		:REAL;
+	VoltL1_THD		:REAL;	// THD of voltage
+	//VoltL1_harm		:ARRAY [0..41] OF REAL;		// [% of fundamental rms] 0 => DC component, 1 => fundamental wave, 2=> 2nd harmonic, 3=> 3rd harmonic
+	
+	CurrentL1_THD	:REAL;	// THD of current
+	CurrentL1_Harm	:ARRAY [0..41] OF REAL;		// [% of fundamental rms] 0 => DC component, 1 => fundamental wave, 2=> 2nd harmonic, 3=> 3rd harmonic
+	
+	//************* L2 phase data *****************
+	ActPowerL2		:REAL;
+	ReactPowerL2	:REAL;
+	ApparPowerL2	:REAL;
+	
+	CurrentL2		:REAL;
+	VoltL2			:REAL;
+	PowFactL2		:REAL;
+	VoltL2_THD		:REAL;	// THD of voltage
+	//VoltL2_harm		:ARRAY [0..41] OF REAL;		// [% of fundamental rms] 0 => DC component, 1 => fundamental wave, 2=> 2nd harmonic, 3=> 3rd harmonic
+	
+	CurrentL2_THD	:REAL;	// THD of current
+	CurrentL2_Harm	:ARRAY [0..41] OF REAL;		// [% of fundamental rms] 0 => DC component, 1 => fundamental wave, 2=> 2nd harmonic, 3=> 3rd harmonic
+	
+	
+	//************* L3 phase data *****************
+	
+	ActPowerL3		:REAL;
+	ReactPowerL3	:REAL;
+	ApparPowerL3	:REAL;
+	
+	CurrentL3		:REAL;
+	VoltL3			:REAL;
+	PowFactL3		:REAL;
+	VoltL3_THD		:REAL;	// THD of voltage
+	//VoltL3_harm		:ARRAY [0..41] OF REAL;		// [% of fundamental rms] 0 => DC component, 1 => fundamental wave, 2=> 2nd harmonic, 3=> 3rd harmonic
+	
+	CurrentL3_THD	:REAL;	// THD of current
+	CurrentL3_Harm	:ARRAY [0..41] OF REAL;		// [% of fundamental rms] 0 => DC component, 1 => fundamental wave, 2=> 2nd harmonic, 3=> 3rd harmonic
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

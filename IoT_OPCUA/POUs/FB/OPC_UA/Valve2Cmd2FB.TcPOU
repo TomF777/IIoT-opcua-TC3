@@ -1,0 +1,253 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="Valve2Cmd2FB" Id="{b101a581-55b5-4064-80c6-8f67b9eb5685}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Valve2Cmd2FB
+VAR_INPUT
+	LineName 			: STRING(40);
+	MachineName 		: STRING(40);
+	ValveName 			: STRING(40);
+	ExtendCmd 			: BOOL;							// command EXTEND
+	ExtendFeedback 		: BOOL;							// sensor feedback EXTEND
+	RetractCmd 			: BOOL;							// command RETRACT
+	RetractFeedback 	: BOOL;							// sensor feedback RETRACT
+	MaxExtendTime		: TIME := T#7S;
+	MaxRetractTime		: TIME := T#7S;
+	TimeStamp 			: ULINT;
+	Enable				: BOOL;
+END_VAR
+VAR_OUTPUT
+	
+	// measured travel times
+	ExtendCmdTime 		: INT;			//time between Extend Command and deactivation of Home(Retract) sensor
+	ExtendTime 			: INT;			//time between deactivation of Home(Retract) sensor and activation of Work(Extend) sensor
+	RetractCmdTime 		: INT;			//time between Retract Command and deactivation of Work(Extend) sensor
+	RetractTime 		: INT;			//time between deactivation of Work(Extend) sensor and activation od Home(retract) sensor
+
+	OpcUaVal			: ValveTravelTime_DataModel;
+END_VAR
+VAR
+	SetParameter : BOOL := TRUE;
+	
+	// enable status edge detection
+	rtrigEnableStatus	: R_TRIG;
+	ftrigEnableStatus	: F_TRIG;
+		
+	// state machine
+	nExtendState			: INT;
+	nRetractState			: INT;
+	
+	// ton for time measurement	
+	tonExtendCmdTime		: TON;
+	tonExtendTime			: TON;
+	tonRetractCmdTime		: TON;
+	tonRetractTime			: TON;
+	
+	// watchdog for travel time monitoring
+	WatchdogExtendSequence: TON;
+	WatchdogRetractSequence: TON;
+	
+	// temporary times
+	ExtendCmdT			: TIME;
+	ExtendT				: TIME;
+	RetractCmdT			: TIME;
+	RetractT			: TIME;
+	
+	// commands edge detection
+	rtrigExtendCmd: R_TRIG;
+	rtrigRetractCmd: R_TRIG;
+
+
+	stValues		: ValveTravelTime_DataModel;
+	
+	// Time Types 
+	TimeTypeExtendCmd 			: STRING := 'ExtendCmdTime';
+	TimeTypeExtend 				: STRING := 'ExtendTime';
+	TimeTypeRetractCmd 			: STRING := 'RetractCmdTime';
+	TimeTypeRetract 			: STRING := 'RetractTime';
+	
+	// temporary mqtt topic
+	TopicString : STRING;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+This FB calculates extend and retract time of
+air valve based on command and feedback status.
+Results are put inot OPC UA struct.
+*)
+IF Enable THEN		
+		
+		//detect edges of command
+		rtrigRetractCmd(CLK:=RetractCmd);
+		rtrigExtendCmd(CLK:=ExtendCmd);
+		
+		IF SetParameter THEN
+			SetParameter := FALSE;
+			
+			// constant entry in json payload
+			stValues.LineName 		:= LineName;
+			stValues.MachineName 	:= MachineName;
+			stValues.ValveName 		:= ValveName;
+			stValues.TimeType		:= '';
+		END_IF
+		
+		// evaluate analytics & sequence only when Enable = true
+		IF rtrigEnableStatus.Q THEN
+			nExtendState := 0;
+			nRetractState := 0;
+		END_IF;
+
+		// disable analytics
+		IF ftrigEnableStatus.Q THEN
+			nExtendState := -1;
+			nRetractState := -1;
+		END_IF
+				
+		// valve extend sequence
+		CASE nExtendState OF
+		0:
+			// initialization
+			tonExtendCmdTime.IN  			:= FALSE;
+			tonExtendTime.IN  				:= FALSE;
+			WatchDogExtendSequence.IN  		:= FALSE;
+		
+			// extend command COMING
+			IF rtrigExtendCmd.Q THEN
+				tonExtendCmdTime.IN := TRUE; 		
+				WatchDogExtendSequence.IN := TRUE; 	
+				nExtendState := 10;
+			END_IF
+		10:
+			nExtendState := 20;
+		20:
+			// Retract Feedback GONE
+			IF NOT RetractFeedback THEN
+				tonExtendCmdTime.IN := FALSE;
+				stValues.timeStamp := TimeStamp; 		
+				tonExtendTime.IN := TRUE; 			
+				ExtendCmdT := tonExtendCmdTime.ET; 
+				nExtendState := 30;
+			END_IF
+		30:
+			// measure extend command time
+			ExtendCmdTime := TIME_TO_INT(ExtendCmdT);
+			stValues.TimeType := TimeTypeExtendCmd;
+			stValues.TimeValue := ExtendCmdTime;
+			
+			// provide measurement OPC UA data for ExtendCmd Time
+			OpcUaVal := stValues;
+			
+			IF ExtendCmd AND NOT RetractFeedback THEN
+				nExtendState := 40;
+			END_IF
+		40:
+
+			// extend feedback COMING 
+			IF ExtendFeedback THEN
+				tonExtendTime.IN := FALSE;
+				stValues.timeStamp := TimeStamp;
+				ExtendT := tonExtendTime.ET;
+				nExtendState := 50;
+			END_IF
+		50:
+			// measure extend time
+			ExtendTime := TIME_TO_INT(ExtendT);
+			WatchDogExtendSequence.IN:= FALSE;
+			stValues.TimeType := TimeTypeExtend;
+			stValues.TimeValue := ExtendTime;
+			
+			// provide measurement OPC UA data for Extend Time
+			OpcUaVal := stValues;
+			
+			nExtendState := 0;
+		999:
+			// error handling if needed
+		END_CASE
+		
+		// watchdog of extend sequence time. If time exceeded then restart sequence
+		IF WatchDogExtendSequence.ET > MaxExtendTime THEN
+			nExtendState := 0;
+		END_IF
+		
+		
+		
+		// valve retract sequence
+		CASE nRetractState OF
+		0:
+			// initialization
+			tonRetractCmdTime.IN  		:= FALSE;
+			tonRetractTime.IN 			:= FALSE;
+			WatchDogRetractSequence.IN 	:= FALSE;
+			
+			// retract command COMING
+			IF rtrigRetractCmd.Q THEN
+				tonRetractCmdTime.IN := TRUE; 
+				WatchDogRetractSequence.IN := TRUE;
+				nRetractState := 10;
+			END_IF
+		10:
+			nRetractState := 20;
+		20:
+			// Extend Feedback GONE
+			IF NOT ExtendFeedback THEN
+				tonRetractCmdTime.IN := FALSE;
+				stValues.timeStamp := TimeStamp;
+				tonRetractTime.IN := TRUE; 
+				RetractCmdT := tonRetractCmdTime.ET;
+				nRetractState := 30;	
+			END_IF
+		30:
+			// measure retract command time
+			RetractCmdTime := TIME_TO_INT(RetractCmdT);
+			stValues.TimeType := TimeTypeRetractCmd;
+			stValues.TimeValue := RetractCmdTime;
+			
+			// provide measurement OPC UA data for RetractCmd Time
+			OpcUaVal := stValues;
+			
+			IF RetractCmd AND NOT ExtendFeedback THEN
+				nRetractState := 40;	
+			END_IF
+		40:
+			// retract feedback COMING 
+			IF RetractFeedback THEN
+				tonRetractTime.IN := FALSE;
+				stValues.timeStamp := TimeStamp;
+				RetractT := tonRetractTime.ET;
+				nRetractState := 50;
+			END_IF
+		50:
+			// measure retract time
+			RetractTime := TIME_TO_INT(RetractT);
+			WatchDogRetractSequence.IN:= FALSE;
+			stValues.TimeType := TimeTypeRetract;
+			stValues.TimeValue := RetractTime;
+			
+			// provide measurement OPC UA data for Retract Time
+			OpcUaVal := stValues;
+			
+			nRetractState := 0;
+		999:
+			// error handling if needed 
+		END_CASE
+		
+		// watchdog of retract sequence time. If time exceeded then restart sequence
+		IF WatchDogRetractSequence.ET > MaxRetractTime THEN
+			nExtendState := 0;
+		END_IF
+		
+		tonExtendCmdTime(PT:=T#10S);
+		tonExtendTime(PT:=T#10S);
+		tonRetractCmdTime(PT:=T#10S);
+		tonRetractTime(PT:=T#10S);
+		WatchDogExtendSequence(PT:=T#10S);
+		WatchDogRetractSequence(PT:=T#10S);
+
+ELSE
+;
+END_IF		
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

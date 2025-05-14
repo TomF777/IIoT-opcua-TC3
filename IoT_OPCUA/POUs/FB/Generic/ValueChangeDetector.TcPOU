@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="ValueChangeDetector" Id="{0a2548e8-235c-4d33-a26a-b06c3223e6ce}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK ValueChangeDetector
+VAR_INPUT
+	Value			:	INT;
+END_VAR
+VAR_OUTPUT
+	ValueChanged	:	BOOL;
+END_VAR
+VAR
+	ValueCurrent	:	INT;
+	ValueMem		:	INT;
+	SetInit			:	BOOL := TRUE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+Detect value change
+*)
+
+ValueCurrent := Value;
+
+ValueChanged := ValueCurrent<>ValueMem;
+
+ValueMem:=ValueCurrent;
+
+// set once to changed on init cycle
+// it allows to send data after power recycle 
+IF SetInit THEN
+	SetInit := FALSE;
+	ValueChanged := TRUE;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

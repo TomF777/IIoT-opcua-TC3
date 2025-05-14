@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <DUT Name="SingleState_DataModel" Id="{ec3e2647-ccd3-436b-932a-fa89ca3ee2aa}">
+    <Declaration><![CDATA[TYPE SingleState_DataModel :
+STRUCT
+	LineName	: STRING(40);
+	MachineName	: STRING(40);
+	StateName	: STRING(40);
+	StateValue	: INT;
+	TimeStamp 	: ULINT;
+END_STRUCT
+END_TYPE
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

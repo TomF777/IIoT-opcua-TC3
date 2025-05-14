@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="TimeStamp" Id="{98a6470b-cf50-42d4-91f7-fb1ecaf72248}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM TimeStamp
+VAR
+	UnixTime: UnixTimestamp;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[UnixTime(SyncTimeEnable := TRUE);
+
+GVL_SW.Unix_TimeStamp := UnixTime.Milliseconds;
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

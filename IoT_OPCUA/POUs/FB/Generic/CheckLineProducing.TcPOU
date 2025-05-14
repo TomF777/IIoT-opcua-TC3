@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="CheckLineProducing" Id="{a6c1b3a7-2280-4c58-b70e-814d9a7b656b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK CheckLineProducing
+VAR_INPUT
+	OkProductNumber		: UINT;
+	NokProductNumber	: UINT;
+END_VAR
+VAR_OUTPUT
+	LineProducing		: BOOL;
+END_VAR
+VAR
+	ProductOK			: UINT;
+	ProductNok			: UINT;
+	ProductOkMem		: UINT;
+	ProductNokMem		: UINT;
+	
+	LineStoppedMem		: BOOL;
+	tonLineStopped		: TON;
+	LineStopped			: SR;
+	LineInOperation		: SR;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+This FB checks if line is producing by evaluation of product pieces. 
+If product pieces number is increasing within time window
+it means line is producing.
+*) 
+
+ProductOK :=OkProductNumber;
+ProductNok := NokProductNumber;
+
+LineStoppedMem := ProductOK=ProductOkMem;
+
+tonLineStopped(IN:=LineStoppedMem , PT:=T#10S , Q=> , ET=> );
+
+IF ProductOK <> ProductOkMem THEN
+	ProductOkMem := ProductOK; 
+END_IF
+
+LineStopped(SET1:=tonLineStopped.Q , RESET:=NOT tonLineStopped.Q , Q1=> );
+LineInOperation(SET1:= NOT tonLineStopped.Q, RESET:=tonLineStopped.Q , Q1=> );
+
+LineProducing := LineInOperation.Q1;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

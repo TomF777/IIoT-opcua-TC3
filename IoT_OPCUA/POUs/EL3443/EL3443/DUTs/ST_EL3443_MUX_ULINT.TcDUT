@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="ST_EL3443_MUX_ULINT" Id="{30899fcc-65fb-460a-8b1a-8721f912c77a}">
+    <Declaration><![CDATA[TYPE ST_EL3443_MUX_ULINT :
+STRUCT
+    nSelector : UINT := E_EL3443_Phase.Error_INDEX_Not_Valid;
+    nValueRef : POINTER TO ULINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

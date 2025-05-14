@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PRG_02_DataMapping" Id="{1bad3b10-b455-4b4f-bef1-e9dc76f7ea05}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_02_DataMapping
+VAR
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+// ************** IO-Link node 1 ***************
+GVL_SW.VibSensor1AccelRmsX 	:= GVL_HW.IoLinkNode1Ch1_VibAccelRmsX;
+GVL_SW.VibSensor1AccelRmsY 	:= GVL_HW.IoLinkNode1Ch1_VibAccelRmsY;
+GVL_SW.VibSensor1AccelRmsZ 	:= GVL_HW.IoLinkNode1Ch1_VibAccelRmsZ;
+GVL_SW.VibSensor1Temp 		:= GVL_HW.IoLinkNode1Ch1_SensorTemp;
+
+GVL_SW.VibSensor2AccelRmsX 	:= GVL_HW.IoLinkNode1Ch2_VibAccelRmsX;
+GVL_SW.VibSensor2AccelRmsY 	:= GVL_HW.IoLinkNode1Ch2_VibAccelRmsY;
+GVL_SW.VibSensor2AccelRmsZ 	:= GVL_HW.IoLinkNode1Ch2_VibAccelRmsZ;
+GVL_SW.VibSensor2Temp 		:= GVL_HW.IoLinkNode1Ch2_SensorTemp;
+
+GVL_SW.VibSensor3AccelRmsX 	:= GVL_HW.IoLinkNode1Ch3_VibAccelRmsX;
+GVL_SW.VibSensor3AccelRmsY 	:= GVL_HW.IoLinkNode1Ch3_VibAccelRmsY;
+GVL_SW.VibSensor3AccelRmsZ 	:= GVL_HW.IoLinkNode1Ch3_VibAccelRmsZ;
+GVL_SW.VibSensor3Temp 		:= GVL_HW.IoLinkNode1Ch3_SensorTemp;
+
+GVL_SW.VibSensor4AccelRmsX 	:= GVL_HW.IoLinkNode1Ch4_VibAccelRmsX;
+GVL_SW.VibSensor4AccelRmsY 	:= GVL_HW.IoLinkNode1Ch4_VibAccelRmsY;
+GVL_SW.VibSensor4AccelRmsZ 	:= GVL_HW.IoLinkNode1Ch4_VibAccelRmsZ;
+GVL_SW.VibSensor4Temp 		:= GVL_HW.IoLinkNode1Ch4_SensorTemp;
+
+GVL_SW.VibSensor5AccelRmsX 	:= GVL_HW.IoLinkNode1Ch5_VibAccelRmsX;
+GVL_SW.VibSensor5AccelRmsY 	:= GVL_HW.IoLinkNode1Ch5_VibAccelRmsY;
+GVL_SW.VibSensor5AccelRmsZ 	:= GVL_HW.IoLinkNode1Ch5_VibAccelRmsZ;
+GVL_SW.VibSensor5Temp 		:= GVL_HW.IoLinkNode1Ch5_SensorTemp;
+
+GVL_SW.VibSensor6AccelRmsX 	:= GVL_HW.IoLinkNode1Ch6_VibAccelRmsX;
+GVL_SW.VibSensor6AccelRmsY 	:= GVL_HW.IoLinkNode1Ch6_VibAccelRmsY;
+GVL_SW.VibSensor6AccelRmsZ 	:= GVL_HW.IoLinkNode1Ch6_VibAccelRmsZ;
+GVL_SW.VibSensor6Temp 		:= GVL_HW.IoLinkNode1Ch6_SensorTemp;
+
+
+// ************** IO-Link node 2 ***************
+GVL_SW.AirMassFlowRate		:= GVL_HW.IoLinkNode2Ch1_MassFlowRate;	
+GVL_SW.AirFlowVelocity		:= GVL_HW.IoLinkNode2Ch1_FlowVelocity;
+GVL_SW.AirVolume			:= GVL_HW.IoLinkNode2Ch1_Volume;
+GVL_SW.AirVolumetricFlowRate := (GVL_HW.IoLinkNode2Ch1_VolFlowRate * 1000) / 60.0;		// convert [m3/h] to [l/min]
+GVL_SW.AirMass				:= GVL_HW.IoLinkNode2Ch1_Mass;
+GVL_SW.AirEnergy			:= GVL_HW.IoLinkNode2Ch1_Energy;
+GVL_SW.AirTemperature		:= GVL_HW.IoLinkNode2Ch1_Temperature;
+GVL_SW.AirPressure			:= GVL_HW.IoLinkNode2Ch1_Pressure;
+
+GVL_SW.AmbientTempSensor 	:=  UINT_TO_REAL( SHL(GVL_HW.IoLinkNode2Ch2_Temperature[1], 8) +  
+												GVL_HW.IoLinkNode2Ch2_Temperature[2]) / 10.0;
+												
+GVL_SW.AmbientHumiditySensor :=  UINT_TO_REAL(SHL(GVL_HW.IoLinkNode2Ch2_Humidity[1], 8) + 
+													GVL_HW.IoLinkNode2Ch2_Humidity[1] ) / 10.0;
+													
+													
+GVL_SW.LevelSensor			:=	TO_REAL(GVL_HW.IoLinkNode2Ch3_Level) / 1000.0;			// convert to m with 1mm resolution
+GVL_SW.DiffPressSensor		:= 	TO_REAL(GVL_HW.IoLinkNode2Ch4_DiffPress) / 10;			// convert to bar with 0.1 bar resolution
+
+// Profinet IO-device data
+GVL_SW.PnIoDevice_32Word_In 	:= GVL_HW.PnIoDevice_32Word_In;
+GVL_SW.PnIoDevice_32DWord_In 	:= GVL_HW.PnIoDevice_32DWord_In;
+GVL_SW.PnIoDevice_10Real_In		:= GVL_HW.PnIoDevice_10Real_In;
+GVL_SW.PnIoDevice_10Real_Out	:= GVL_HW.PnIoDevice_10Real_Out;
+
+// Here it's place for specified mapping of GVL_SW.PnIoDevice e.g.
+// GVL_SW.Motor1.SignalStart :=  GVL_HW.PnIoDevice_32Word_In[1].0;
+// GVL_SW.AnalogValue1 := GVL_HW.PnIoDevice_10Real_In[0].1;
+
+	
+
+
+	
+	
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

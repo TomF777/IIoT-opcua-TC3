@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="ST_EL3443_MUX_REAL" Id="{ecb7cd96-1eb4-49c5-a994-79fed5a86a53}">
+    <Declaration><![CDATA[TYPE ST_EL3443_MUX_REAL :
+STRUCT
+    nSelector : UINT := E_EL3443_Phase.Error_INDEX_Not_Valid;
+    fValueRef : REFERENCE TO REAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

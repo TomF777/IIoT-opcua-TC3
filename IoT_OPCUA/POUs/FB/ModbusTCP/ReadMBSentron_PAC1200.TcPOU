@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="ReadMBSentron_PAC1200" Id="{a6e71bcb-f594-4510-8c86-275712e1e98b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK ReadMBSentron_PAC1200
+VAR_INPUT
+	IpAddress						: STRING(20);
+	RequestTime						: TIME := T#100MS;
+	Enable						: BOOL;
+END_VAR
+VAR CONSTANT
+	wMBAddress_Read				: WORD 					:= 16#0001;								// First address to read
+	wMBAddress_Write			: WORD 					:= 16#3010;								// First address to write
+END_VAR
+VAR	
+	arReadRegs					: ARRAY [0..16#49] OF WORD;										// read 73dec WORDs via Modbus
+	
+	arReadRegsCycle0			: ARRAY [0..16#49] OF WORD;										// register 0..73
+	arReadRegsCycle1			: ARRAY [0..16#49] OF WORD;										// register 74..145
+
+	ErrorID						: UDINT;														// Last error
+	wCounterSuccess				: WORD;
+	wCounterErrors				: WORD;	
+	
+	// Application variables
+	Step						: INT;
+	tonRecycle					: TON;
+	Auto						: BOOL := TRUE;													// Continuous RW
+	// FBs
+	fbMBReadRegs				: FB_MBReadRegs;
+	fbMBWriteRegs				: FB_MBWriteRegs;
+	MBcycle						: BYTE;															// cycle 0 = read registers 0..73, cycle 1 = read registers 74..145
+	
+	wMBAddressRead				: WORD ;														// First address to read
+
+END_VAR
+VAR_OUTPUT
+	ElectricalData				: ElectrDataModbusTCP;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// This PRG reads 146 registers (16bit) via MODBUS function 3. 
+// Due to the limitation of reading only 128 registers with FB_MBReadRegs from Beckhoff library TF6250
+// there is a switching mechanism for reading registers in two cycles
+// during cycle0  - registers from 0..73 are read
+// during cycle1  - registers from 74..145 are read
+
+// Timer for auto mode - Read/write frequency
+tonRecycle(IN:= Auto AND NOT tonRecycle.Q, PT:= RequestTime);
+
+
+CASE Step OF
+
+	0:	// Idle
+
+		ErrorID				:= 0;
+		IF tonRecycle.Q THEN
+			Step 				:= Step + 10;
+		END_IF
+
+	10:	// Read Registers - Modbus function 3
+
+		fbMBReadRegs.bExecute 	:= TRUE;
+		Step 					:= Step + 10;
+		
+		//set MB address for different request step
+		IF MBcycle = 0 THEN
+			wMBAddressRead := 16#0000;					// start reading from adress 0
+		
+		ELSIF MBcycle = 1 THEN
+			wMBAddressRead := 16#004A;					// start reading from adress 74
+		END_IF
+	
+
+	20:	// Wait till register read ends
+
+		fbMBReadRegs.bExecute 	:= FALSE;
+		IF NOT fbMBReadRegs.bBusy THEN
+			IF NOT fbMBReadRegs.bError THEN
+				Step 			:= Step + 10;
+				
+				//save data from MB to proper array
+				IF MBcycle = 0 THEN
+					arReadRegsCycle0 := arReadRegs;
+				ELSIF MBcycle = 1 THEN
+					arReadRegsCycle1 := arReadRegs;
+				END_IF
+				
+				//increase MB step after each successful reading of MB data
+				MBcycle := MBcycle+1;
+				
+				IF  MBcycle >1 THEN
+					MBcycle :=0;
+				END_IF
+				
+			ELSE
+				ErrorID			:= fbMBReadRegs.nErrId;
+				wCounterErrors	:= wCounterErrors + 1;
+				Step 			:= 100;
+			END_IF
+		END_IF
+
+	30:	// Write Registers - Modbus function 16
+
+		//fbMBWriteRegs.bExecute 	:= TRUE;
+		//iStep 					:= iStep + 10;
+		
+		Step := 0;	//only test, delete it
+		
+	40:	
+		
+
+		// Wait till register write ends
+		(*
+		fbMBWriteRegs.bExecute 	:= FALSE;
+		IF NOT fbMBWriteRegs.bBusy THEN
+			IF NOT fbMBWriteRegs.bError THEN
+				wCounterSuccess	:= wCounterSuccess + 1;
+				iStep 			:= 0;
+			ELSE
+				udiErrorID		:= fbMBWriteRegs.nErrId;
+				wCounterErrors	:= wCounterErrors + 1;
+				iStep 			:= 100;
+			END_IF
+		END_IF
+		*)
+
+	100: // Error
+		Step := 0;
+		;
+
+END_CASE
+
+// Read Modbus function 3
+fbMBReadRegs(	sIPAddr			:= IpAddress, 
+				nTCPPort		:= MODBUS_TCP_PORT,
+				nQuantity		:= SIZEOF(arReadRegs)/2,								//SIZEOF(arrReadRegs)/2, 
+				nMBAddr			:= wMBAddressRead, 
+				cbLength		:= SIZEOF(arReadRegs),									//SIZEOF(arrReadRegs), 
+				pDestAddr		:= ADR(arReadRegs));
+				
+
+// output electrical data
+ElectricalData.ActPowerPos := DWORD_TO_REAL((arReadRegsCycle0[0] * 65536) + arReadRegsCycle0[1] ) * 0.1/1000.0;			// Total + Active power [kW]
+ElectricalData.ActPowerNeg := DWORD_TO_REAL((arReadRegsCycle0[2] * 65536) + arReadRegsCycle0[3] ) * 0.1/1000.0;			// Total - Active power [kW]
+
+ElectricalData.ReactPowerPos := DWORD_TO_REAL((arReadRegsCycle0[4] * 65536) + arReadRegsCycle0[5]) * 0.1/1000.0;		// Total + Reactive power [kvar]
+ElectricalData.ReactPowerNeg := DWORD_TO_REAL((arReadRegsCycle0[6] * 65536) + arReadRegsCycle0[7]) * 0.1/1000.0;		// Total - Reactive power [kvar]
+
+ElectricalData.ApparPowerPos := DWORD_TO_REAL((arReadRegsCycle0[16] * 65536) + arReadRegsCycle0[17]) * 0.1/1000.0;		// Total + Apparent power [kVA]
+ElectricalData.ApparPowerNeg := DWORD_TO_REAL((arReadRegsCycle0[18] * 65536) + arReadRegsCycle0[19]) * 0.1/1000.0;		// Total - Apparent power [kVA]
+
+ElectricalData.PowerFact 	:= WORD_TO_REAL(arReadRegsCycle0[25]) * 0.001 ;		// Power factor total [no unit]
+ElectricalData.LineFreq		:= WORD_TO_REAL(arReadRegsCycle0[27]) * 0.001 ;		// Line frequency [Hz]
+
+
+// L1 electrical data
+ElectricalData.ActPowerPosL1 := DWORD_TO_REAL((arReadRegsCycle0[40] * 65536) + arReadRegsCycle0[41]) * 0.1/1000.0;		// + Active power L1 [kW]
+ElectricalData.ActPowerNegL1 := DWORD_TO_REAL((arReadRegsCycle0[42] * 65536) + arReadRegsCycle0[43]) * 0.1/1000.0;		// - Active power L1 [kW]
+
+ElectricalData.ReactPowerPosL1 := DWORD_TO_REAL((arReadRegsCycle0[44] * 65536) + arReadRegsCycle0[45]) * 0.1/1000.0;	// + Reactive power L1 [kW]
+ElectricalData.ReactPowerNegL1 := DWORD_TO_REAL((arReadRegsCycle0[46] * 65536) + arReadRegsCycle0[47]) * 0.1/1000.0;	// - Reactive power L1 [kW]
+
+ElectricalData.CurrentL1 := DWORD_TO_REAL((arReadRegsCycle0[60] * 65536) + arReadRegsCycle0[61]) * 0.001;				// Current L1 [A]
+ElectricalData.PowFactL1 := WORD_TO_REAL(arReadRegsCycle0[65]) * 0.001 ;												// Power factor L1 [no unit]
+
+// L2 electrical data
+ElectricalData.ActPowerPosL2 := DWORD_TO_REAL((arReadRegsCycle1[6] * 65536) + arReadRegsCycle1[7]) * 0.1/1000.0;		// + Active power L2 [kW]
+ElectricalData.ActPowerNegL2 := DWORD_TO_REAL((arReadRegsCycle1[8] * 65536) + arReadRegsCycle1[9]) * 0.1/1000.0;		// - Active power L2 [kW]
+
+ElectricalData.ReactPowerPosL2 := DWORD_TO_REAL((arReadRegsCycle1[10] * 65536) + arReadRegsCycle1[11]) * 0.1/1000.0;	// + Reactive power L2 [kW] 
+ElectricalData.ReactPowerNegL2 := DWORD_TO_REAL((arReadRegsCycle1[12] * 65536) + arReadRegsCycle1[13]) * 0.1/1000.0;	// - Reactive power L2 [kW]
+
+ElectricalData.CurrentL2 := DWORD_TO_REAL((arReadRegsCycle1[26] * 65536) + arReadRegsCycle1[27]) * 0.001;				// Current L2 [A]
+ElectricalData.PowFactL2 := WORD_TO_REAL(arReadRegsCycle0[31]) * 0.001;													// Power factor L2 [no unit]										
+
+// L3 electrical data
+ElectricalData.ActPowerPosL3 := DWORD_TO_REAL((arReadRegsCycle1[46] * 65536) + arReadRegsCycle1[47]) * 0.1/1000.0;		// + Active power L3 [kW]
+ElectricalData.ActPowerNegL3 := DWORD_TO_REAL((arReadRegsCycle1[48] * 65536) + arReadRegsCycle1[49]) * 0.1/1000.0;		// - Active power L3 [kW]
+ 
+ElectricalData.ReactPowerPosL3 := DWORD_TO_REAL((arReadRegsCycle1[50] * 65536) + arReadRegsCycle1[51]) * 0.1/1000.0;	// + Reactive power L3 [kW]
+ElectricalData.ReactPowerNegL3 := DWORD_TO_REAL((arReadRegsCycle1[52] * 65536) + arReadRegsCycle1[53]) * 0.1/1000.0;	// - Reactive power L3 [kW]
+ 
+ElectricalData.CurrentL3 := DWORD_TO_REAL((arReadRegsCycle1[66] * 65536) + arReadRegsCycle1[67]) * 0.001;				// Current L3 [A]
+ElectricalData.PowFactL3 := WORD_TO_REAL(arReadRegsCycle0[71]) * 0.001 ;												// Power factor L3 [no unit]
+
+
+				]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

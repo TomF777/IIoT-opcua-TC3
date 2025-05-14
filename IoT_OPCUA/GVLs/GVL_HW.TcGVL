@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <GVL Name="GVL_HW" Id="{fbb8ce6e-97f9-4aa4-9b45-44d29b9d22c8}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	(* Input Data from Profinet IO-Device*)
+	PnIoDevice_32Word_In 			AT%I*: ARRAY[0..31] OF WORD;
+	PnIoDevice_32DWord_In 			AT%I*: ARRAY[0..31] OF DWORD;
+	PnIoDevice_10Real_In 			AT%I*: ARRAY[0..9] OF REAL;
+	
+	(* Output Data to Profinet IO-Device*)
+	PnIoDevice_10Real_Out 			AT%Q*: ARRAY[0..9] OF REAL;
+	
+	
+	(* Process image data from IO-link node 1 *)  
+	IoLinkNode1Ch1_VibAccelRmsX		AT%I*:REAL;
+	IoLinkNode1Ch1_VibAccelRmsY		AT%I*:REAL;
+	IoLinkNode1Ch1_VibAccelRmsZ		AT%I*:REAL;
+	IoLinkNode1Ch1_SensorTemp		AT%I*:REAL;
+	
+	IoLinkNode1Ch2_VibAccelRmsX		AT%I*:REAL;
+	IoLinkNode1Ch2_VibAccelRmsY		AT%I*:REAL;
+	IoLinkNode1Ch2_VibAccelRmsZ		AT%I*:REAL;
+	IoLinkNode1Ch2_SensorTemp		AT%I*:REAL;
+	
+	IoLinkNode1Ch3_VibAccelRmsX		AT%I*:REAL;
+	IoLinkNode1Ch3_VibAccelRmsY		AT%I*:REAL;
+	IoLinkNode1Ch3_VibAccelRmsZ		AT%I*:REAL;
+	IoLinkNode1Ch3_SensorTemp		AT%I*:REAL;
+	
+	IoLinkNode1Ch4_VibAccelRmsX		AT%I*:REAL;
+	IoLinkNode1Ch4_VibAccelRmsY		AT%I*:REAL;
+	IoLinkNode1Ch4_VibAccelRmsZ		AT%I*:REAL;
+	IoLinkNode1Ch4_SensorTemp		AT%I*:REAL;
+	
+	IoLinkNode1Ch5_VibAccelRmsX		AT%I*:REAL;
+	IoLinkNode1Ch5_VibAccelRmsY		AT%I*:REAL;
+	IoLinkNode1Ch5_VibAccelRmsZ		AT%I*:REAL;
+	IoLinkNode1Ch5_SensorTemp		AT%I*:REAL;
+	
+	IoLinkNode1Ch6_VibAccelRmsX		AT%I*:REAL;
+	IoLinkNode1Ch6_VibAccelRmsY		AT%I*:REAL;
+	IoLinkNode1Ch6_VibAccelRmsZ		AT%I*:REAL;
+	IoLinkNode1Ch6_SensorTemp		AT%I*:REAL;
+	
+	(* Process image data from IO-link node 2 *)
+	IoLinkNode2Ch1_MassFlowRate		AT%I*:REAL;		// [kg/h]
+	IoLinkNode2Ch1_FlowVelocity		AT%I*:REAL;		// [m/s]
+	IoLinkNode2Ch1_Volume			AT%I*:REAL;		// [m3]
+	IoLinkNode2Ch1_VolFlowRate		AT%I*:REAL;		// [m3/h]
+	IoLinkNode2Ch1_Mass				AT%I*:REAL;		// [kg]
+	IoLinkNode2Ch1_Energy			AT%I*:REAL;		// [kWh]
+	IoLinkNode2Ch1_Temperature		AT%I*:REAL;		// [°C]	
+	IoLinkNode2Ch1_Pressure			AT%I*:REAL;		// [bar]
+	
+	IoLinkNode2Ch2_Temperature		AT%I*: ARRAY[1..2] OF USINT;
+	IoLinkNode2Ch2_Humidity			AT%I*: ARRAY[1..2] OF USINT;
+	
+	IoLinkNode2Ch3_Level			AT%I*: INT;		// [m] * 0.001
+	
+	IoLinkNode2Ch4_DiffPress		AT%I*: UINT;	// [bar] * 0.1	
+	
+	
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

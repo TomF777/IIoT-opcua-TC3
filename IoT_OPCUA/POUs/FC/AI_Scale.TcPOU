@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="AI_Scale" Id="{b2b83a15-3659-4c8a-8335-68e4c21e2d60}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION AI_Scale : REAL
+VAR_INPUT
+	IN		:REAL;
+	INmin	:REAL;
+	INmax	:REAL;
+	OUTmin	:REAL;
+	OUTmax	:REAL;
+END_VAR
+VAR
+	A:REAL;
+	B:REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF IN<INmin THEN
+	AI_Scale := INmin;
+ELSIF IN>INmax THEN
+	AI_Scale := INmax;
+ELSE
+	IF INmin<>INmax THEN
+		A := (OUTmax-OUTmin)/(INmax-INmin);
+		B := OUTmax-(A*INmax);
+		AI_Scale := A*IN + B;
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="AI_Scale">
+      <LineId Id="7" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="21" Count="2" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="15" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

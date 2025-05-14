@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="UnixTimestamp" Id="{f34b0f05-bba1-4a8e-ac45-861aa43fa410}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK UnixTimestamp
+VAR_INPUT
+	SyncTimeEnable : BOOL;
+END_VAR
+VAR_OUTPUT
+	Seconds: ULINT;
+    Milliseconds: ULINT;
+	SyncTimeValid : BOOL;
+END_VAR
+VAR
+	localSystemTime : FB_LocalSystemTime := (dwCycle := 1 );
+    getTimeZoneInformation : FB_GetTimeZoneInformation;
+    timeZoneInformation : ST_TimeZoneInformation;
+    specificLocalTimeToFileTime : FB_TzSpecificLocalTimeToFileTime;
+    fileTime: T_FILETIME;
+    onZerothSecondLastCycle : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Get local system time
+localSystemTime(bEnable := SyncTimeEnable);
+
+IF(localSystemTime.bValid)THEN
+	// On the zeroth second of each minutesync timezone information
+	IF (timeZoneInformation.standardName = '' OR (localSystemTime.systemTime.wSecond = 0 AND NOT onZerothSecondLastCycle)) THEN
+    	getTimeZoneInformation(sNetID := '', bExecute := TRUE, tzInfo => timeZoneInformation);
+	END_IF;
+
+	// Convert local system time to unix timestamps
+	specificLocalTimeToFileTime(in := Tc2_Utilities.SYSTEMTIME_TO_FILETIME(localSystemTime.systemTime), tzInfo := timeZoneInformation, out => fileTime);
+	//seconds := (SHL(DWORD_TO_ULINT(fileTime.dwHighDateTime), 32) + DWORD_TO_ULINT(fileTime.dwLowDateTime)) / 10000000 - 11644473600;
+	milliseconds := (SHL(DWORD_TO_ULINT(fileTime.dwHighDateTime), 32) + DWORD_TO_ULINT(fileTime.dwLowDateTime)) / 10000 - 11644473600000;
+
+	onZerothSecondLastCycle := localSystemTime.systemTime.wSecond = 0;
+	SyncTimeValid := TRUE;
+ELSE
+	SyncTimeValid := FALSE;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

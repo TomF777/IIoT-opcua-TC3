@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="ReadMemoryUsage" Id="{3cbe75a4-d5c5-4552-b188-633c344ae63d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK ReadMemoryUsage
+
+VAR_INPUT
+	NetID				: 	STRING;
+END_VAR
+
+VAR
+	  
+    eStateMemTotal      : BYTE;            	  // index for state machine Total Memory allocated 
+	eStateMemAvail      : BYTE;               // index for state machine Memory Available   
+    bStartMemTotal      : BOOL := TRUE;       // flag to trigger (re)start of statemachine
+	bStartMemAvail      : BOOL := TRUE;       // flag to trigger (re)start of statemachine
+    nDataMemTotal       : ULINT;              // data storage for Total Memory 
+    nDataMemAvail       : ULINT;              // data storage for Memory Avaiable
+    stMDP_AddrMemTotal  : ST_MDP_Addr;        // structure for MDP addresses  
+    stMDP_AddrMemAvail  : ST_MDP_Addr;        // structure for MDP addresses
+	
+    // FB instances
+    fbReadMDPElementMemTotal    : FB_MDP_ReadElement; // instance of FB for reading MDP element 
+	fbReadMDPElementMemAvail    : FB_MDP_ReadElement; // instance of FB for reading MDP element 
+
+    // execution results
+    bErrorMemTotal              : BOOL;               // error flag (indicator: error occured)
+    nErrIDMemTotal              : UDINT;              // last error ID
+    nMemTotalAllocated          : ULINT;              // total memory allocated [bytes] 
+	
+	// execution results
+    bErrorMemAvail              : BOOL;               // error flag (indicator: error occured)
+    nErrIDMemAvail              : UDINT;              // last error ID
+    nMemAvailable               : ULINT;              // memory available [bytes]
+
+END_VAR
+
+VAR_OUTPUT
+	MemUsage					: UINT;			  	  // current memory usage [%]
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+This FB reads out current values of total memory and 
+memory available on the target system.
+It works properly on Beckhoff HW.
+*)
+
+CASE eStateMemTotal OF
+    0: 
+        IF bStartMemTotal THEN
+            bStartMemTotal := FALSE;
+            eStateMemTotal := 1; 							//** initiate first state
+        END_IF
+
+    1:    
+        stMDP_AddrMemTotal.nArea    := INT_TO_BYTE(eMDP_Area_ConfigArea); 	// set area address to "Config Area"
+        stMDP_AddrMemTotal.nTableId := 1;              						// table ID in module for "cpu properties"
+        stMDP_AddrMemTotal.nSubIdx  := 6;              						// subindex in table ID for "CPU usage"    
+																			// 06=program memory allocated (>4GB RAM)
+									            							// 07=program memory available (>4GB RAM)                 
+        
+        fbReadMDPElementMemTotal(
+            bExecute    := TRUE,               	  // Flag: trigger execution of FB
+             
+			eModuleType := eMDP_ModT_Memory, 	  // desired module type = Memory       
+            stMDP_Addr  := stMDP_AddrMemTotal,    // MDP address structure. Dynamic module ID added internally. 
+            iModIdx     := 0,                     // instance of desired module type (0 = first instance) 
+            pDstBuf     := ADR(nDataMemTotal),    // buffer for storing data
+            cbDstBufLen := SIZEOF(nDataMemTotal), // length of buffer
+            sAmsNetId   := NetID,          
+            );                                    // Note: fbReadMDPElement.tTimeOut must be > cycle time!
+
+        eStateMemTotal := 2;  					  // next state: process FB
+            
+    2:                
+        fbReadMDPElementMemTotal(bExecute := FALSE);    // Flag: Get execution state of FB 
+                                               	  		//** Note: fbReadMDPElement.tTimeOut must be > cycle time!
+
+        IF NOT fbReadMDPElementMemTotal.bBusy THEN     
+            IF fbReadMDPElementMemTotal.bError THEN    
+                bErrorMemTotal    := TRUE;             					// set error flag
+                nErrIDMemTotal    := fbReadMDPElementMemTotal.nErrID; 	// store error id (16#ECA60105 = BIOS or HW does 
+                                               							// not support this data (here: mainboard data))
+                eStateMemTotal    := 0;				   					// finish state machine
+            ELSE                               							
+                bErrorMemTotal    := FALSE;            					
+                nMemTotalAllocated := nDataMemTotal;            		// store in dedicated variable
+                eStateMemTotal    := 1; 			   					// next state 
+            END_IF
+        END_IF
+    
+END_CASE 
+
+
+CASE eStateMemAvail OF
+    0: 
+        IF bStartMemAvail THEN
+            bStartMemAvail := FALSE;
+            eStateMemAvail := 1; //** initiate first state
+        END_IF
+
+    1:    
+        stMDP_AddrMemAvail.nArea    := INT_TO_BYTE(eMDP_Area_ConfigArea); //** set area address to "Config Area"
+        stMDP_AddrMemAvail.nTableId := 1;              //** table ID in module for "cpu properties"
+        stMDP_AddrMemAvail.nSubIdx  := 7;              //** subindex in table ID for "CPU usage"                     
+        
+        fbReadMDPElementMemAvail(
+            bExecute    := TRUE,               			// Flag: trigger execution of FB
+            //eModuleType := eMDP_ModT_CPU,      		//** desired module type = CPU 
+			eModuleType := eMDP_ModT_Memory,        
+            stMDP_Addr  := stMDP_AddrMemAvail,         	// MDP address structure. Dynamic module ID added internally. 
+            iModIdx     := 0,                  			//** instance of desired module type (0 = first instance) 
+            pDstBuf     := ADR(nDataMemAvail),         	// buffer for storing data
+            cbDstBufLen := SIZEOF(nDataMemAvail),      	// length of buffer
+            sAmsNetId   := NetID,          				// AMS Net ID
+            );                                 			//** Note: fbReadMDPElement.tTimeOut must be > cycle time!
+
+        eStateMemAvail := 2;  					   	   	//** next state: process FB
+            
+    2:                									//** process FB: request CPU data
+        fbReadMDPElementMemAvail(bExecute := FALSE);   	// Flag: Get execution state of FB 
+                                               			//** Note: fbReadMDPElement.tTimeOut must be > cycle time!
+
+        IF NOT fbReadMDPElementMemAvail.bBusy THEN     						// FB executed?
+            IF fbReadMDPElementMemAvail.bError THEN    						// Error?
+                bErrorMemAvail    := TRUE;             						// set error flag
+                nErrIDMemAvail    := fbReadMDPElementMemAvail.nErrID; 		// store error id (16#ECA60105 = BIOS or HW does 
+                                               								// not support this data (here: mainboard data))
+                eStateMemAvail    := 0;				   						// finish state machine
+            ELSE                               								// set parameters for next steps
+                bErrorMemAvail    := FALSE;            						// turn off error flag
+                nMemAvailable := nDataMemAvail;            					//** store CPU usage in dedicated variable
+                eStateMemAvail    := 1; 			   						//** next state 
+            END_IF
+        END_IF
+    
+END_CASE 
+
+// calculate current memory usage as difference between total memory - available memory
+IF nMemTotalAllocated <>0 THEN
+	MemUsage := REAL_TO_UINT(100 * ULINT_TO_REAL(nMemTotalAllocated - nMemAvailable)/ULINT_TO_REAL(nMemTotalAllocated));
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

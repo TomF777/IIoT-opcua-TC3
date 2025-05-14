@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="ElectricalDevicePeriodicOper" Id="{4e4e7ef3-5fbd-42e2-843d-e5281a590f85}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK ElectricalDevicePeriodicOper
+VAR_INPUT
+	LineName					: STRING(40);
+	MachineName 				: STRING(40);
+	DeviceName					: STRING(40);
+	TimeStamp					: ULINT;
+	DeviceElectricalData 		: ElectrDataEthCAT;
+	DeviceRunning				: BOOL;
+	SynchPulse					: BOOL;
+	Enable						: BOOL;
+END_VAR
+VAR_OUTPUT
+	OpcUaVal					: ElectrDevicePeriodicOper_DataModel;
+END_VAR
+VAR
+	SetParameter 				: BOOL := TRUE;
+		
+	// state machine
+	nState						: INT;		
+	
+	// structure for data exchange
+	stValues					: ElectrDevicePeriodicOper_DataModel;	
+	
+	// Trigger for updating output OPC UA data
+	UpdateOpcUa					: BOOL;
+	
+	// device state detection
+	rtrigDeviceRunning: R_TRIG;
+	ftrigDeviceRunning: F_TRIG;
+
+	// state of monitored electrical device
+	DeviceState			: BOOL;
+
+	// safety watchdog
+	tonWatchdog : TON;	
+	
+	StoppingCntr 	: INT;
+	StoppedCntr 	: INT;
+	
+	 // Drive States
+     RunningState	: BOOL := FALSE;
+     StoppingState	: BOOL := FALSE;
+     StoppedState	: BOOL := FALSE;
+	 DriveStates	: DriveState_DataModel; 
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+This FB evaluates electrical data from EL3443 when electrical device is in 'Running'
+and creates output struct for OPC UA
+*)
+
+IF Enable THEN
+		DeviceState := DeviceRunning;
+		
+		// synchronisation pulse from FB input
+		stValues.SynchPulse := SynchPulse;
+		
+		// edge detection for drive state evaluation
+		rtrigDeviceRunning(CLK:=DeviceState);	
+		ftrigDeviceRunning(CLK:=DeviceState);	
+		
+		IF SetParameter THEN
+			SetParameter := FALSE;		
+			// constant entry in json payload
+			stValues.LineName := LineName;
+			stValues.MachineName := MachineName;
+			stValues.DeviceName := DeviceName;
+		END_IF
+		
+		
+		// evaluate device state
+		CASE nState OF
+		0:
+		// IDLE
+			StoppingCntr 		:= 0;
+			StoppedCntr 		:= 0;
+			RunningState 		:= FALSE;
+			StoppingState	 	:= FALSE;
+			StoppedState 		:= FALSE;
+			UpdateOpcUa			:= FALSE;
+			stValues.DeviceState := DriveStates.StoppedState;
+			
+			IF rtrigDeviceRunning.Q THEN
+				// sequence watchdog
+				tonWatchdog.IN := TRUE; 
+				nState := 10;
+			END_IF
+			
+		10:
+		// RUNNING
+			RunningState := TRUE;
+			stValues.DeviceState := DriveStates.RunningState;
+			
+			// update OPC UA values
+			UpdateOpcUa := TRUE;
+			
+			IF ftrigDeviceRunning.Q THEN
+				RunningState := FALSE;
+				nState := 20;
+			END_IF
+		
+		20:
+		// STOPPING
+			StoppingState 			:= TRUE;
+			stValues.DeviceState 	:= DriveStates.StoppingState;
+			tonWatchdog.IN := FALSE;
+			
+			IF StoppingState THEN StoppingCntr := StoppingCntr + 1; END_IF
+			
+			IF StoppingCntr = 3 THEN
+				StoppingState := FALSE;
+				nState := 30;
+			END_IF
+		
+		30:
+		// STOPPED
+			StoppedState 			:= TRUE;
+			stValues.DeviceState 	:= DriveStates.StoppedState;
+		
+			IF StoppedState THEN StoppedCntr := StoppedCntr + 1; END_IF
+			
+			IF StoppedCntr = 2 THEN
+				StoppedState := FALSE;
+				UpdateOpcUa := FALSE;
+				nState := 0;
+			END_IF
+			
+		END_CASE
+		
+		
+		IF UpdateOpcUa THEN
+			//write electrical data from FB input to OPC UA structure
+			stValues.ElectricalData := DeviceElectricalData;
+			stValues.TimeStamp := TimeStamp;
+			OpcUaVal := stValues;
+		END_IF
+ELSE
+		tonWatchdog.IN := FALSE;
+		nState := 0;
+END_IF
+
+IF tonWatchdog.ET > T#10S THEN
+	nState := 0;
+END_IF
+tonWatchdog(PT:=T#10S);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

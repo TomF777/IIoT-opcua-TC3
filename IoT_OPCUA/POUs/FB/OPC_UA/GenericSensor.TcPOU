@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="GenericSensor" Id="{9632db95-4e08-4765-a67f-8324dcbe3bcc}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK GenericSensor
+VAR_INPUT
+	LineName	: STRING(40);
+	MachineName : STRING(40);
+	SensorName	: STRING(40);
+	TimeStamp	: ULINT;
+	Value		: REAL;	 
+	Enable		: BOOL; //enable sensor evaluation
+END_VAR
+VAR_OUTPUT
+	OpcUaVal		: SingleSensor_DataModel;
+END_VAR
+VAR
+	SetParameter : BOOL := TRUE;	
+	
+	stValues		: SingleSensor_DataModel;	
+	
+	// safety watchdog
+	tonWatchdog : TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+This FB evaluates analog value and creates output struct for OPC UA
+*) 
+
+IF Enable THEN
+	
+	IF SetParameter THEN
+		SetParameter := FALSE;
+		// constant entry
+		stValues.LineName := LineName;
+		stValues.MachineName := MachineName;
+		stValues.SensorName := SensorName;
+	END_IF
+	
+	stValues.timeStamp := TimeStamp;
+	stValues.SensorValue := Value;
+		
+	OpcUaVal := stValues;
+ELSE
+	;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

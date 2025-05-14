@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <DUT Name="ElectrDataModbusTCP" Id="{d09db5b8-0d26-4dda-a710-4f371ddf1c5c}">
+    <Declaration><![CDATA[TYPE ElectrDataModbusTCP :
+STRUCT
+	// Power Measurement Data
+	// Modbus register from Siemens 7KT PAC1200
+	ActPowerPos		:REAL;
+	ActPowerNeg		:REAL;
+	ReactPowerPos	:REAL;
+	ReactPowerNeg	:REAL;
+	ApparPowerPos	:REAL;
+	ApparPowerNeg	:REAL;
+	PowerFact		:REAL;
+	LineFreq		:REAL;
+	
+	//L1 phase data
+	ActPowerPosL1	:REAL;
+	ActPowerNegL1	:REAL;
+	
+	ReactPowerPosL1	:REAL;
+	ReactPowerNegL1	:REAL;
+	
+	CurrentL1		:REAL;
+	VoltL1			:REAL;
+	PowFactL1		:REAL;
+	
+	//L2 phase data
+	ActPowerPosL2	:REAL;
+	ActPowerNegL2	:REAL;
+	
+	ReactPowerPosL2	:REAL;
+	ReactPowerNegL2	:REAL;
+	
+	CurrentL2		:REAL;
+	VoltL2			:REAL;
+	PowFactL2		:REAL;
+	
+	//L3 phase data
+	ActPowerPosL3	:REAL;
+	ActPowerNegL3	:REAL;
+	
+	ReactPowerPosL3	:REAL;
+	ReactPowerNegL3	:REAL;
+	
+	CurrentL3		:REAL;
+	VoltL3			:REAL;
+	PowFactL3		:REAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

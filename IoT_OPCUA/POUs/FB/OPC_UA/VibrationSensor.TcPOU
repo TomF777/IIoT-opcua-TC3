@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="VibrationSensor" Id="{f08c6a31-1a87-4412-b67d-9774487a9275}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK VibrationSensor
+VAR_INPUT
+	LineName			: STRING(40);
+	MachineName 		: STRING(40);
+	SensorName			: STRING(40);
+	TimeStamp			: ULINT;
+	VibAccelX			: REAL;
+    VibAccelY			: REAL;
+    VibAccelZ			: REAL;	
+    SensorTemperature	: REAL;
+	MotorState			: BOOL;	
+	Enable				: BOOL;
+END_VAR
+VAR_OUTPUT
+	OpcUaVal			: VibAccelarationDataModel;
+END_VAR
+VAR
+	SetParameter 		: BOOL := TRUE;
+	
+	// state machine
+	nState				: INT := 0;
+	
+	stValues			: VibAccelarationDataModel;	
+
+	// motor status 
+	rtrigMotorState		: R_TRIG;
+	ftrigMotorState		: F_TRIG;
+	 
+	// safety watchdog
+	tonWatchdog 		: TON;
+	
+	StoppingCntr 		: INT;
+	StoppedCntr 		: INT;
+	
+	 //Motor state
+	 StartingState		: BOOL := FALSE;
+     RunningState		: BOOL := FALSE;
+     StoppingState		: BOOL := FALSE;
+     StoppedState		: BOOL := FALSE;
+	 DriveStates		: DriveState_DataModel; 
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+This FB calculates analytics when motor status is TRUE.
+During this state vibration's values from axis x,y,z from the sensor
+are accumulated and will create output struct for OPC UA  at falling
+edge of the motor state.
+Vibration sensor needs to be located ar the motor or its gearing/coupling 
+*)
+
+IF SetParameter THEN
+	SetParameter := FALSE;
+	
+	// constant entry in struct
+	stValues.LineName := LineName;
+	stValues.MachineName := MachineName;
+	stValues.SensorName := SensorName;
+END_IF
+
+
+// detect motor state (running/stopped)
+rtrigMotorState(CLK:=MotorState);
+ftrigMotorState(CLK:=MotorState);
+
+IF ENABLE THEN
+	CASE nState OF
+	0:
+		ClearData();
+		
+		IF rtrigMotorState.Q THEN
+			tonWatchdog.IN := TRUE;
+			nState := 10;
+		END_IF
+		
+	10:
+	// RUNNING
+		RunningState := TRUE;
+		stValues.TimeStamp := TimeStamp;
+		stValues.VibAccelTotRmsX := stValues.VibAccelTotRmsX + VibAccelX;
+		stValues.VibAccelTotRmsY := stValues.VibAccelTotRmsY + VibAccelY;
+		stValues.VibAccelTotRmsZ := stValues.VibAccelTotRmsZ + VibAccelZ;
+		stValues.SensorTemperature := SensorTemperature;
+	
+		IF ftrigMotorState.Q THEN
+			RunningState := FALSE;
+			nState := 20;
+		END_IF
+	
+	20:
+	// STOPPING
+		StoppingState := TRUE;
+		stValues.TimeStamp := TimeStamp;
+		stValues.VibAccelTotRmsX := stValues.VibAccelTotRmsX + VibAccelX;
+		stValues.VibAccelTotRmsY := stValues.VibAccelTotRmsY + VibAccelY;
+		stValues.VibAccelTotRmsZ := stValues.VibAccelTotRmsZ + VibAccelZ;
+		stValues.SensorTemperature := SensorTemperature;
+		
+		StoppingCntr := StoppingCntr + 1;
+		
+		IF StoppingCntr = 2 THEN
+			StoppingState := FALSE;
+			nState := 30;
+		END_IF
+	
+	30:
+	// STOPPED
+		StoppedState := TRUE;
+		stValues.TimeStamp := TimeStamp;
+		stValues.VibAccelTotRmsX := ROUND(stValues.VibAccelTotRmsX + VibAccelX, 4);
+		stValues.VibAccelTotRmsY := ROUND(stValues.VibAccelTotRmsY + VibAccelY, 4);
+		stValues.VibAccelTotRmsZ := ROUND(stValues.VibAccelTotRmsZ + VibAccelZ, 4);
+		stValues.SensorTemperature := ROUND(SensorTemperature, 2);
+	
+		StoppedCntr := StoppedCntr + 1;
+		
+		IF StoppedCntr = 2 THEN
+			StoppedState := FALSE;
+			// provide measurement OPC UA data
+			OpcUaVal := stValues;
+			nState := 0;
+		END_IF
+		
+		tonWatchdog.IN := FALSE;
+		
+	END_CASE
+	
+	//Watchdog 7 seconds, restart of sequence
+	IF tonWatchdog.ET > T#7S AND nState <> 0 THEN
+		nState := 0;
+	END_IF
+ELSE
+	tonWatchdog.IN := FALSE;
+	ClearData();
+END_IF
+
+tonWatchdog(PT:=T#10S);]]></ST>
+    </Implementation>
+    <Method Name="ClearData" Id="{c962942d-7f03-44a4-bea1-8a76882364e7}">
+      <Declaration><![CDATA[METHOD ClearData
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[nState			:= 0;
+StoppingCntr 	:= 0;
+StoppedCntr 	:= 0;
+RunningState 	:= FALSE;
+StoppingState 	:= FALSE;
+StoppedState 	:= FALSE;
+stValues.VibAccelTotRmsX := 0.0;
+stValues.VibAccelTotRmsY := 0.0;
+stValues.VibAccelTotRmsZ := 0.0;
+]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

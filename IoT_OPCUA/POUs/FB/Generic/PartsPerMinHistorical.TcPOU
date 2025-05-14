@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PartsPerMinHistorical" Id="{00e76176-7ebe-4485-be84-04097f761fd9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK PartsPerMinHistorical
+VAR_INPUT
+	// Sensor activated when product counted
+	ProductSensor		:	BOOL;
+END_VAR
+VAR_IN_OUT
+	PartsPerMinHist		:	ARRAY[1..5] OF INT;
+END_VAR
+VAR
+	tonTimer			:	TON;
+	rtTimeElapsed		:	R_TRIG;
+	rtProductCounted	:	R_TRIG;
+	ProductCount		:	INT;
+	Idx					:	INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+This FB calculates number of counted products within one minute.
+It includes historical data.
+After one minute elapses, current value from index 5 of array 
+is moved to next index on the left.  Other indexes are also moved to the left.
+This way the array can be used for HMI chart showing data production from 
+last 5 minutes  
+*)
+tonTimer(IN:= NOT tonTimer.Q, PT:= T#60S);
+
+rtProductCounted(CLK:=ProductSensor);
+IF rtProductCounted.Q THEN ProductCount := ProductCount+1; END_IF;
+
+PartsPerMinHist[5] := ProductCount;
+
+rtTimeElapsed(CLK:=tonTimer.Q);
+IF rtTimeElapsed.Q THEN
+	FOR Idx := 1 TO 4 BY 1 DO
+		PartsPerMinHist[Idx]:=PartsPerMinHist[Idx+1];
+	END_FOR
+	ProductCount := 0;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

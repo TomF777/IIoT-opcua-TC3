@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="Main_500us" Id="{a34c670a-d887-469f-b802-3316f38ecbb5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Main_500us
+VAR
+	ElectricalDevice1 					: FB_EL3443;		// electrical device e.g. motor, drive
+	ElectricalDevice2 					: FB_EL3443;		// electrical device e.g. motor, drive
+	
+	// electrical device 1, phase L1
+	CurrL1ElecDevice1					: REAL;
+	VoltL1ElecDevice1					: REAL;
+	ActPowL1ElecDevice1					: REAL;
+	AppPowL1ElecDevice1					: REAL;
+	ReactPowL1ElecDevice1				: REAL;
+	PowFactL1ElecDevice1				: REAL;
+	
+	// electrical device 1, phase L2
+	CurrL2ElecDevice1					: REAL;
+	VoltL2ElecDevice1					: REAL;
+	ActPowL2ElecDevice1					: REAL;
+	AppPowL2ElecDevice1					: REAL;
+	ReactPowL2ElecDevice1				: REAL;
+	PowFactL2ElecDevice1				: REAL;
+	
+	// electrical device 1, phase L3
+	CurrL3ElecDevice1					: REAL;
+	VoltL3ElecDevice1					: REAL;
+	ActPowL3ElecDevice1					: REAL;
+	AppPowL3ElecDevice1					: REAL;
+	ReactPowL3ElecDevice1				: REAL;
+	PowFactL3ElecDevice1				: REAL;
+
+	// electrical device 2, phase L1
+	CurrL1ElecDevice2					: REAL;
+	VoltL1ElecDevice2					: REAL;
+	ActPowL1ElecDevice2					: REAL;
+	AppPowL1ElecDevice2					: REAL;
+	ReactPowL1ElecDevice2				: REAL;
+	PowFactL1ElecDevice2				: REAL;
+	
+	// electrical device 2, phase L2
+	CurrL2ElecDevice2					: REAL;
+	VoltL2ElecDevice2					: REAL;
+	ActPowL2ElecDevice2					: REAL;
+	AppPowL2ElecDevice2					: REAL;
+	ReactPowL2ElecDevice2				: REAL;
+	PowFactL2ElecDevice2				: REAL;
+	
+	// electrical device 2, phase L3
+	CurrL3ElecDevice2					: REAL;
+	VoltL3ElecDevice2					: REAL;
+	ActPowL3ElecDevice2					: REAL;
+	AppPowL3ElecDevice2					: REAL;
+	ReactPowL3ElecDevice2				: REAL;
+	PowFactL3ElecDevice2				: REAL;
+	
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(* 
+This PRG should run in very fast task (500us) to enable 
+proper real-time data acquisition from EL3443 measurement modules.
+*)
+
+ElectricalDevice1(
+	bEnable:= TRUE , 
+	stStatusTotal=> , 
+	stStatusPhase_L1=> , 
+	stStatusPhase_L2=> , 
+	stStatusPhase_L3=> , 
+	stVariantValues=> , 
+	bError=> );
+	
+ElectricalDevice2(
+	bEnable:= TRUE , 
+	stStatusTotal=> , 
+	stStatusPhase_L1=> , 
+	stStatusPhase_L2=> , 
+	stStatusPhase_L3=> , 
+	stVariantValues=> , 
+	bError=> );
+	
+
+	
+	// data from IO proces image - very fast (real time)
+	CurrL1ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Basic_Current;
+	VoltL1ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Basic_Voltage;
+	ActPowL1ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Power_Active_Power;
+	AppPowL1ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Power_Apparent_Power;
+	ReactPowL1ElecDevice1 := ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Power_Reactive_Power;
+	PowFactL1ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Power_Power_Factor;
+	
+	CurrL2ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Basic_Current;
+	VoltL2ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Basic_Voltage;
+	ActPowL2ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Power_Active_Power;
+	AppPowL2ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Power_Apparent_Power;
+	ReactPowL2ElecDevice1 := ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Power_Reactive_Power;
+	PowFactL2ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Power_Power_Factor;
+	
+	CurrL3ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Basic_Current;
+	VoltL3ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Basic_Voltage;
+	ActPowL3ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Power_Active_Power;
+	AppPowL3ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Power_Apparent_Power;
+	ReactPowL3ElecDevice1 := ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Power_Reactive_Power;
+	PowFactL3ElecDevice1 	:= ElectricalDevice1.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Power_Power_Factor;
+	
+	CurrL1ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Basic_Current;
+	VoltL1ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Basic_Voltage;
+	ActPowL1ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Power_Active_Power;
+	AppPowL1ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Power_Apparent_Power;
+	ReactPowL1ElecDevice2 := ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Power_Reactive_Power;
+	PowFactL1ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L1_Power_Power_Factor;
+	
+	CurrL2ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Basic_Current;
+	VoltL2ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Basic_Voltage;
+	ActPowL2ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Power_Active_Power;
+	AppPowL2ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Power_Apparent_Power;
+	ReactPowL2ElecDevice2 := ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Power_Reactive_Power;
+	PowFactL2ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L2_Power_Power_Factor;
+	
+	CurrL3ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Basic_Current;
+	VoltL3ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Basic_Voltage;
+	ActPowL3ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Power_Active_Power;
+	AppPowL3ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Power_Apparent_Power;
+	ReactPowL3ElecDevice2 := ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Power_Reactive_Power;
+	PowFactL3ElecDevice2 	:= ElectricalDevice2.stEL3443_IO.MDP5001_341_Input.MDP5001_341_L3_Power_Power_Factor;
+	
+
+	
+	// data from FB processing (with some delay - not really real-time)
+	(*ElectricalDevice2.stVariantValues.astLx[1].fI_RMS;
+	ElectricalDevice2.stVariantValues.astLx[1].fPower_Factor;
+	ElectricalDevice2.stVariantValues.astLx[1].fP;
+	ElectricalDevice2.stVariantValues.astLx[1].fQ;
+	ElectricalDevice2.stVariantValues.astLx[1].fS;
+	
+	ElectricalDevice2.stVariantValues.astLx[1].fHarmonics_I;
+	*)
+
+
+	
+	
+	]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

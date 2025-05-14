@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="TONR" Id="{f8daf50b-5b5c-4cb5-96d8-59b185791bf9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK TONR
+VAR_INPUT
+	IN		: 	BOOL;
+	Reset	:	BOOL;
+	PT		:	TIME;
+END_VAR
+VAR RETAIN
+	Running	:	BOOL;
+	StartTime:	TIME;	
+END_VAR
+	
+VAR_OUTPUT RETAIN
+	ET:TIME;
+END_VAR
+
+VAR_OUTPUT
+	Q		:	BOOL;
+END_VAR
+
+VAR
+	ResetONS	: R_TRIG;
+	TimeElaps	: TIME;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// retentive TON timer
+
+IF IN AND NOT Running THEN
+	StartTime := TIME();
+	Running := TRUE;
+END_IF
+
+IF NOT IN AND Running THEN
+	StartTime := TIME();
+END_IF
+
+IF IN AND Running THEN
+	TimeElaps := TIME() - StartTime;
+	StartTime := TIME();
+	
+	ET:= ET + TimeElaps;
+END_IF
+
+ResetONS(CLK:= Reset);
+
+IF ResetONS.Q THEN
+	Running := FALSE;
+	StartTime := TIME();
+	ET:=T#0MS;
+	Q:=FALSE;
+END_IF
+
+
+Q:=ET>=PT;
+ 
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

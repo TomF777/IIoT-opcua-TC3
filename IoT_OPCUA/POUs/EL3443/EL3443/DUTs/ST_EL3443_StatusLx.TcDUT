@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="ST_EL3443_StatusLx" Id="{8e108ca8-47dc-4605-ac50-f8050a9eb8de}">
+    <Declaration><![CDATA[TYPE ST_EL3443_StatusLx :
+STRUCT
+    bStatus_Voltage_Sign_Bit : BOOL;             //Voltage Sign Bit - Indicates the sign of the current sine wave voltage: 1 = U > 0V, 0 = U < 0V
+    bStatus_Overvoltage : BOOL;                  //Overvoltage - Maximum measurable voltage is exceeded.
+    bStatus_Overcurrent : BOOL;                  //Overcurrent - Maximum measurable current is exceeded.
+    bStatus_Inaccurate_Voltage : BOOL;           //Inaccurate Voltage - The measured voltage value is smaller than the value entered in CoE object "F800:15 Inaccurate Threshold Voltage".
+    bStatus_Inaccurate_Current : BOOL;           //Inaccurate Current - The measured current value is smaller than the value entered in CoE object "F800:16 Inaccurate Threshold Current".
+    bStatus_Voltage_Guard_Warning : BOOL;        //Voltage Guard Warning - A warning limit of the voltage monitor has been breached.
+    bStatus_Voltage_Guard_Error : BOOL;          //Voltage Guard Error - An error limit of the voltage monitor has been breached.
+    bStatus_Current_Guard_Warning : BOOL;        //Voltage Current Warning - A warning limit of the Current monitor has been breached.
+    bStatus_Current_Guard_Error : BOOL;          //Voltage Current Error - An error limit of the Current monitor has been breached.
+    bStatus_TxPDO_Toggle : BOOL;                 //TxPDO Toggle - The TxPDO toggle is toggled by the slave when the data of the associated TxPDO is updated.
+    fBasic_Voltage : REAL;                       //Voltage - RMS value of the voltage in V
+    fBasic_Current : REAL;                       //Current - RMS value of the current in A
+    fPower_Active_Power : REAL;                  //Active power Active power in W
+    fPower_Apparent_Power : REAL;                //Apparent Power Apparent power in VA
+    fPower_Reactive_Power : REAL;                //Reactive Power Reactive power in var
+    fPower_Power_Factor : REAL;                  //Power Factor Power factor
+    nTiming_Voltage_Last_Zero_Crossing : ULINT;  //Voltage Last Zero Crossing - Last detected voltage zero crossing as distributed clock time
+END_STRUCT
+END_TYPE
+
+
+
+
+
+
+
+
+
+
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

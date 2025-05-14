@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <GVL Name="GVL_const" Id="{0d6b5618-3a41-48b6-8867-5446470a3816}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+		
+	MqttBrokerIPAddress		: STRING		:= '192.168.1.101';
+	
+	MqttHostPort			: UINT			:= 1883;
+	MqttUserName			: STRING		:= 'mqttbroker';
+	MqttPassword			: STRING		:= 'IoT-mqttbroker';
+	
+	LineName 				: STRING		:= 'IoT_Industrial';
+	MachineName 			: STRING		:= 'device01';
+	
+	// PLC diagnostic states
+	PlcCpuMemUsage			: STRING		:= 'PlcCpuMemoryUsage';
+	PlcCpuCore2Usage		: STRING		:= 'PlcCpuCore2Usage';
+	PlcCpuCore3Usage		: STRING		:= 'PlcCpuCore3Usage';
+	PlcCpuCore2Jitter		: STRING		:= 'PlcCpuCore2Jitter';
+	PlcCpuCore3Jitter		: STRING		:= 'PlcCpuCore3Jitter';
+	
+	// air flow sensor
+	AirFlowSensor			: STRING		:= 'AirFlow1';
+	AirPresSensor			: STRING		:= 'AirPressure1';
+	AirTempSensor			: STRING		:= 'AirTemperature1';
+	
+	// ambient temperature & humidity sensor
+	AmbientTempSensor		: STRING		:= 'AmbientTemperature';
+	AmbientHumiditySensor 	: STRING		:= 'AmbientHumidity';
+
+
+	// vibration sensors 
+	VibSensor1 			:STRING			:= 'Vib1';			
+	VibSensor2 			:STRING			:= 'Vib2';			
+	VibSensor3 			:STRING			:= 'Vib3';			
+	VibSensor4 			:STRING			:= 'Vib4';		
+	VibSensor5 			:STRING			:= 'Vib5';			
+	VibSensor6 			:STRING			:= 'Vib6';		
+	
+	// air valves
+	AirValve1			:STRING			:= 'AirValve1';
+	AirValve2			:STRING			:= 'AirValve2';
+	AirValve3			:STRING			:= 'AirValve3';
+	AirValve4			:STRING			:= 'AirValve4';
+	
+	// electrical devices  - periodic operation - (motors/drives)
+	ElecDevice1 		: STRING 		:= 'ElecDevice1';
+	ElecDevice2 		: STRING 		:= 'ElecDevice2';
+	
+	// electrical devices  - continous operation 
+	ElecDevice3 		: STRING 		:= 'ElecDevice3';
+	
+	DiffPressSensor1	: STRING		:= 'DiffPressSensor1';
+	
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

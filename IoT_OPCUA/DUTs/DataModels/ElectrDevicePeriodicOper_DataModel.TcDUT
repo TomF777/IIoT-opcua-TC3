@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <DUT Name="ElectrDevicePeriodicOper_DataModel" Id="{607d2904-cd32-4553-a9e9-825b8248dd87}">
+    <Declaration><![CDATA[(* Electrical device with periodic operation mode *)
+TYPE ElectrDevicePeriodicOper_DataModel :
+STRUCT
+	LineName			: STRING(40);
+	MachineName			: STRING(40);
+	DeviceName			: STRING(40);
+	DeviceState			: STRING(20); // Device state: Running, Stopping, Stopped
+	SynchPulse			: BOOL;
+	TimeStamp 			: ULINT;
+	
+	{attribute 'OPC.UA.DA' := '1'}
+	{attribute 'OPC.UA.DA.Access' := '1'}			// read only
+	{attribute 'OPC.UA.DA.StructuredType' := '1'}
+	ElectricalData 		: ElectrDataEthCAT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

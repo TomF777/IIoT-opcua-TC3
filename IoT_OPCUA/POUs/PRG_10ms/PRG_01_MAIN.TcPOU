@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PRG_01_MAIN" Id="{6779098e-183c-40bc-9866-f079e3b788e4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_01_MAIN
+VAR
+			tonRecycle100ms			:	TON;
+			tonRecycle5sec			:	TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[PRG_02_DataMapping();
+
+Simulation();
+
+PRG_03_VibrationAnalytics();
+PRG_04_AirValveAnalytics();
+PRG_05_ElectricalAnalytics();
+PRG_06_ElectricalMonitoring();
+PRG_07_LineState();
+PRG_08_ProductionStatistics();
+PRG_09_PlcDiagnostic();
+
+
+tonRecycle5sec(IN:=NOT tonRecycle5sec.Q, PT:=T#5S);
+tonRecycle100ms(IN:=NOT tonRecycle100ms.Q, PT:=T#500MS);
+
+// 500 ms cycle monitoring
+IF tonRecycle100ms.Q THEN
+	PRG_11_AirFlowAnalytics();
+	
+END_IF
+
+// slow process values monitoring
+IF tonRecycle5sec.Q THEN
+	PRG_10_TempHumidAnalytics();
+	PRG_12_OilContaminationAnalytics();
+END_IF
+
+
+
+
+
+
+
+
+
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="Valve_Signal_Sim" Id="{2a9b1ae6-1146-41b4-80ba-190ef9aed5fe}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Valve_Signal_Sim
+VAR_INPUT
+	StartSim : BOOL;
+	
+	ExtendCmdTime	:	TIME;
+	ExtendTime		:	TIME;
+	RetractCmdTime	:	TIME;
+	RetractTime		:	TIME;
+END_VAR
+VAR_OUTPUT
+	ExtendCmd 		: 	BOOL;
+	ExtendFeedback 	: 	BOOL;
+	RetractCmd 		: 	BOOL;
+	RetractFeedback : 	BOOL;
+	SequenceStatus 	: 	INT;
+	
+END_VAR
+VAR
+	tonExtendCmd	: TON;
+	tonExtend		: TON;
+	tonRetractCmd	: TON;
+	tonRetract		: TON;
+	
+	ExtendPos_ton: TON; //czas przebywania na pozycji Extend
+	RetractPos_ton: TON; //czas przebywania na pozycji Retract
+	
+	nState : INT;
+	
+	// sequence watchdog
+	tonWatchdog		: TON;
+	rtrigStartSim	: R_TRIG;
+
+	Step20Cnt: INT;
+	Step30Cnt: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[rtrigStartSim(CLK:=StartSim);
+
+CASE nState OF
+0:
+	SequenceStatus := 0;
+	tonExtendCmd.IN := FALSE;
+	tonExtend.IN := FALSE;
+	tonRetractCmd.IN := FALSE;
+	tonRetract.IN := FALSE;
+	
+	RetractFeedback := TRUE;
+	
+	IF rtrigStartSim.Q THEN
+		nState := nState + 10;
+		tonWatchdog.IN := TRUE;
+	END_IF
+
+10:
+	SequenceStatus := 10;
+	ExtendCmd := TRUE;
+	tonExtendCmd.IN := TRUE;
+	IF tonExtendCmd.Q THEN
+		nState := nState + 10;
+		tonExtendCmd.IN := FALSE;
+	END_IF
+20:	
+	SequenceStatus := 20;
+	RetractFeedback :=FALSE;
+	tonExtend.IN := TRUE;
+	IF tonExtend.Q THEN
+		nState := nState + 10;
+		tonExtend.IN := FALSE;
+	END_IF
+		
+	
+30:
+	SequenceStatus := 30;
+	ExtendFeedback := TRUE;
+	ExtendCmd := FALSE;
+	ExtendPos_ton.IN := TRUE;
+	IF ExtendPos_ton.Q THEN
+		nState := nState + 10;
+		ExtendPos_ton.IN := FALSE;
+	END_IF
+
+
+40:
+	SequenceStatus := 40;
+	RetractCmd := TRUE;
+	tonRetractCmd.IN := TRUE;
+	IF tonRetractCmd.Q THEN
+		nState := nState + 10;
+		tonRetractCmd.IN := FALSE;
+	END_IF
+50:
+	SequenceStatus := 50;
+	ExtendFeedback :=FALSE;
+	tonRetract.IN := TRUE;
+	IF tonRetract.Q THEN
+		nState := nState + 10;
+		tonRetract.IN := FALSE;
+	END_IF
+60:
+	SequenceStatus := 60;
+	RetractFeedback := TRUE;
+	RetractCmd := FALSE;
+	RetractPos_ton.IN := TRUE;
+	IF RetractPos_ton.Q THEN
+		nState := 10;
+		RetractPos_ton.IN := FALSE;
+	END_IF
+
+	
+END_CASE
+
+IF StartSim = FALSE THEN
+	nState := 0;
+END_IF
+
+tonExtendCmd(PT:=ExtendCmdTime);
+tonExtend(PT:=ExtendTime);
+tonRetractCmd(PT:=RetractCmdTime);
+tonRetract(PT:=RetractTime);
+
+ExtendPos_ton(PT:=T#500MS);
+RetractPos_ton(PT:=T#500MS);
+tonWatchdog(PT:=T#2H);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

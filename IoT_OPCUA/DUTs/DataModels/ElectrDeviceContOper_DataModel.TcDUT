@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <DUT Name="ElectrDeviceContOper_DataModel" Id="{39274b22-511f-40b5-86e5-5fdcf09753dd}">
+    <Declaration><![CDATA[(*Electrical device with continous operation mode*)
+TYPE ElectrDeviceContOper_DataModel :
+STRUCT
+	LineName	: STRING(40);
+	MachineName	: STRING(40);
+	DeviceName	: STRING(40);
+	
+	{attribute 'OPC.UA.DA' := '1'}
+	{attribute 'OPC.UA.DA.Access' := '1'}			// read only
+	{attribute 'OPC.UA.DA.StructuredType' := '1'}
+	ElectricalData : ElectrDataModbusTCP;
+	
+	TimeStamp 	: ULINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,258 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="Simulation" Id="{e1f130df-fca8-4cdf-a6d5-8d2189cbf404}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Simulation
+VAR
+	idx			: BYTE;
+	tp1Motor 	: ARRAY[1..6] OF TP;
+	tp2Motor 	: ARRAY[1..6] OF TP;
+	
+	VibSensorBase : ARRAY[1..6] OF REAL := [0.7, 0.2, 0.3, 0.8, 0.5, 0.1];
+	VibSensorOffset : ARRAY[1..6] OF REAL;
+	
+	AirFlowRateBase			:	REAL := 30.0;
+	AirPressureBase			:	REAL := 6.0;
+	AirTemperatureBase		:	REAL := 20.0;
+	
+	AirValve				:	ARRAY [1..6] OF Valve_Signal_Sim;
+	AirValvePositionSim		: 	ARRAY [1..6] OF INT;
+	
+	tonProductPos			:	TON;
+	rtrigProductSensor		: 	R_TRIG;
+	
+	tp1AutoMode				:	TP;
+	tp2AutoMode				:	TP;
+	tp1AutoModeTime			:	TIME := T#5S;
+	tp2AutoModeTime			:	TIME := T#2S;
+	rtrigAutoMode			:	R_TRIG;
+
+	rndTime1				: INT;
+	rndTime2				: INT;
+	
+	ElecSample1				: INT;
+	ElecSample2				: INT;
+	ElecCurrentOffsetL1		: REAL;
+	ElecCurrentOffsetL2		: REAL;	
+	ElecCurrentOffsetL3		: REAL;
+	ElCurrentL1Base			: ARRAY[1..2] OF ARRAY[1..100] OF REAL := 
+								[
+								[0, 0, 0.1, 0.3, 0.45, 0.60, 0.70, 0.80, 0.95, 1.1, 1.3, 1.4, 1.55, 1.6, 1.59,1.55, 
+								1.45, 1.3, 1.2, 1.1, 1.05, 1.0, 0.95, 0.9, 0.85, 0.83, 0.80, 0.78, 0.75, 0.74, 0.72,
+								0.70, 0.69, 0.69, 0.69, 0.68, 0.68, 0.67, 0.67, 0.65, 0.64, 0.62, 0.60, 0.58, 0.58, 0.57, 0.56, 0.55, 0.55,
+								0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+								[0, 0, 0.1, 0.2, 0.3, 0.55, 1.0, 1.3, 1.5, 1.7, 1.8, 1.81, 1.7, 1.5, 1.2, 1.22, 1.19, 1.23,
+								1.19, 1.21, 1.18, 1.22, 1.19, 1.23, 1.17, 1.21, 1.20, 1.18, 1.21, 1.18, 1.22, 1.17, 1.23,
+								1.19, 1.21, 1.19, 1.20, 1.19, 1.20, 1.19, 1.21, 1.20, 1.20, 1.22, 1.19, 1.21, 1.18, 1.21, 1.2, 1.2,
+								1.21, 1.20, 1.20, 1.22, 1.19, 1.21, 1.18, 1.21, 1.2, 1.2, 40(1.2)]];
+								
+	ElCurrentL2Base			: ARRAY[1..2] OF ARRAY[1..100] OF REAL := 
+								[
+								[0, 0, 0.1, 0.3, 0.45, 0.60, 0.70, 0.80, 0.95, 1.1, 1.3, 1.4, 1.55, 1.6, 1.59,1.55, 
+								1.45, 1.3, 1.2, 1.1, 1.05, 1.0, 0.95, 0.9, 0.85, 0.83, 0.80, 0.78, 0.75, 0.74, 0.72,
+								0.70, 0.69, 0.69, 0.69, 0.68, 0.68, 0.67, 0.67, 0.65, 0.64, 0.62, 0.60, 0.58, 0.58, 0.57, 0.56, 0.55, 0.55,
+								0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+								[0, 0, 0.1, 0.2, 0.3, 0.55, 1.0, 1.3, 1.5, 1.7, 1.8, 1.81, 1.7, 1.5, 1.2, 1.22, 1.19, 1.23,
+								1.19, 1.21, 1.18, 1.22, 1.19, 1.23, 1.17, 1.21, 1.20, 1.18, 1.21, 1.18, 1.22, 1.17, 1.23,
+								1.19, 1.21, 1.19, 1.20, 1.19, 1.20, 1.19, 1.21, 1.20, 1.20, 1.22, 1.19, 1.21, 1.18, 1.21, 1.2, 1.2,
+								1.21, 1.20, 1.20, 1.22, 1.19, 1.21, 1.18, 1.21, 1.2, 1.2]];
+
+	ElCurrentL3Base			: ARRAY[1..2] OF ARRAY[1..100] OF REAL := 
+								[
+								[0, 0, 0.1, 0.3, 0.45, 0.60, 0.70, 0.80, 0.95, 1.1, 1.3, 1.4, 1.55, 1.6, 1.59,1.55, 
+								1.45, 1.3, 1.2, 1.1, 1.05, 1.0, 0.95, 0.9, 0.85, 0.83, 0.80, 0.78, 0.75, 0.74, 0.72,
+								0.70, 0.69, 0.69, 0.69, 0.68, 0.68, 0.67, 0.67, 0.65, 0.64, 0.62, 0.60, 0.58, 0.58, 0.57, 0.56, 0.55, 0.55,
+								0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+								[0, 0, 0.1, 0.2, 0.3, 0.55, 1.0, 1.3, 1.5, 1.7, 1.8, 1.81, 1.7, 1.5, 1.2, 1.22, 1.19, 1.23,
+								1.19, 1.21, 1.18, 1.22, 1.19, 1.23, 1.17, 1.21, 1.20, 1.18, 1.21, 1.18, 1.22, 1.17, 1.23,
+								1.19, 1.21, 1.19, 1.20, 1.19, 1.20, 1.19, 1.21, 1.20, 1.20, 1.22, 1.19, 1.21, 1.18, 1.21, 1.2, 1.2,
+								1.21, 1.20, 1.20, 1.22, 1.19, 1.21, 1.18, 1.21, 1.2, 1.2]];
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF GVL_Visu.ButtonStart THEN
+	
+	GVL_Visu.LineRunning := TRUE;
+	// simulate motor running signals
+	tp1Motor[1](IN:= NOT tp2Motor[1].Q, PT:= T#1S);
+	tp2Motor[1](IN:= NOT tp1Motor[1].Q, PT:= T#500MS);
+	
+	tp1Motor[2](IN:= NOT tp2Motor[2].Q, PT:= T#2S);
+	tp2Motor[2](IN:= NOT tp1Motor[2].Q, PT:= T#300MS);
+	
+	tp1Motor[3](IN:= NOT tp2Motor[3].Q, PT:= T#1.7S);
+	tp2Motor[3](IN:= NOT tp1Motor[3].Q, PT:= T#500MS);
+	
+	tp1Motor[4](IN:= NOT tp2Motor[4].Q, PT:= T#1S);
+	tp2Motor[4](IN:= NOT tp1Motor[4].Q, PT:= T#1S);
+	
+	tp1Motor[5](IN:= NOT tp2Motor[5].Q, PT:= T#500MS);
+	tp2Motor[5](IN:= NOT tp1Motor[5].Q, PT:= T#2S);
+	
+	tp1Motor[6](IN:= NOT tp2Motor[6].Q, PT:= T#1S);
+	tp2Motor[6](IN:= NOT tp1Motor[6].Q, PT:= T#300MS);
+	
+	// simulate auto/manual mode
+	tp1AutoMode(IN:= NOT tp2AutoMode.Q, PT:= tp1AutoModeTime);
+	tp2AutoMode(IN:= NOT tp1AutoMode.Q, PT:= tp2AutoModeTime);
+	
+	rtrigAutoMode(CLK:=tp1AutoMode.Q);
+	
+	// generate random time windows of auto and manual period  
+	IF  rtrigAutoMode.Q THEN
+		rndTime1 := RDM2(last:=2, low:=0, high:=70);
+		tp1AutoModeTime:=T#5S + INT_TO_TIME(rndTime1*100);
+		
+		rndTime2 := RDM2(last:=5, low:=0, high:=30);
+		tp2AutoModeTime:=T#2S + INT_TO_TIME(rndTime2*100);
+	END_IF
+
+	GVL_Visu.AutoMode := tp2AutoMode.Q;
+	
+	
+	// simulate vibration sensors
+	FOR idx := 1 TO 6 DO
+		GVL_Visu.MotorRunning[idx] := tp1Motor[idx].Q;
+		
+		GVL_Visu.VibrationSensorX[idx] := VibSensorBase[idx] + RDM(0.4);
+		GVL_Visu.VibrationSensorY[idx] := VibSensorBase[idx] + RDM(0.2);
+		GVL_Visu.VibrationSensorZ[idx] := VibSensorBase[idx] + RDM(0.8);	
+	END_FOR
+	
+	// simulate air supply sensors
+	GVL_Visu.AirFlowRate 		:= AirFlowRateBase + 2* RDM(0.5);
+	GVL_Visu.AirPressure		:= AirPressureBase + 2 * RDM(0.9); 
+	GVL_Visu.AirTemperature		:= AirTemperatureBase + RDM(0.3);
+	
+	// simulate air valves
+	AirValve[1](StartSim			:= TRUE, 
+			    ExtendCmdTime		:= T#500MS,
+			    ExtendTime 			:= T#1800MS,
+			    RetractCmdTime 		:= T#600MS,
+			    RetractTime  		:= T#2000MS);
+			  
+	AirValve[2](StartSim			:= TRUE, 
+			    ExtendCmdTime		:= T#50MS,
+			    ExtendTime 			:= T#180MS,
+			    RetractCmdTime 		:= T#50MS,
+			    RetractTime  		:= T#145MS);
+				
+	AirValve[3](StartSim			:= TRUE, 
+			    ExtendCmdTime		:= T#100MS,
+			    ExtendTime 			:= T#1200MS,
+			    RetractCmdTime 		:= T#120MS,
+			    RetractTime  		:= T#1500MS);
+				
+	AirValve[4](StartSim			:= TRUE, 
+			    ExtendCmdTime		:= T#30MS,
+			    ExtendTime 			:= T#120MS,
+			    RetractCmdTime 		:= T#30MS,
+			    RetractTime  		:= T#120MS);
+				
+	FOR idx := 1 TO 4 DO
+		GVL_Visu.AirValve[idx].ExtendCmd := AirValve[idx].ExtendCmd;
+		GVL_Visu.AirValve[idx].ExtendFeedback := AirValve[idx].ExtendFeedback;
+		GVL_Visu.AirValve[idx].RetractCmd := AirValve[idx].RetractCmd;
+		GVL_Visu.AirValve[idx].RetractFeedback := AirValve[idx].RetractFeedback;
+		GVL_Visu.AirValvePositionSim[idx] := SEL (NOT GVL_Visu.AirValveEnable[idx], AirValve[idx].nState, 0);
+	END_FOR
+	
+	// simulate product position on the conveyor
+	tonProductPos(IN:= NOT tonProductPos.Q, PT:=T#200MS);
+	IF tonProductPos.Q THEN
+		GVL_Visu.ProductPosition := GVL_Visu.ProductPosition + TO_INT(GVL_Visu.LineSpeed / 5);
+	END_IF
+	
+	IF GVL_Visu.ProductPosition >= 190 THEN
+		GVL_Visu.ProductPosition := 0;
+	END_IF
+	
+	// simulate product sensor acitivation
+	IF GVL_Visu.ProductPosition >= 175 AND
+		 GVL_Visu.ProductPosition <190 THEN
+	GVL_Visu.SensorProductActive := TRUE;
+	ELSE
+		GVL_Visu.SensorProductActive := FALSE;
+	END_IF;
+	
+	// simulate product counting
+	rtrigProductSensor(CLK:=GVL_Visu.SensorProductActive);
+	IF rtrigProductSensor.Q THEN
+		GVL_Visu.OkProductCount := GVL_Visu.OkProductCount + 1;
+	END_IF
+	
+	// simulate electrical current curve of motor 1
+	IF GVL_Visu.MotorRunning[1] THEN
+		ElecSample1 := ElecSample1+1;
+		ElecSample1 := SEL(ElecSample1=60, ElecSample1, 1);
+		IF ElecSample1 < 20 OR ElecSample1 > 40 THEN
+			ElecCurrentOffsetL1 := RDM(0.67) * 0.05;
+			ElecCurrentOffsetL2 := RDM(0.23) * 0.05;
+			ElecCurrentOffsetL3 := RDM(0.72) * 0.05;
+		ELSE
+			ElecCurrentOffsetL1 := RDM(0.31) * 0.05;
+			ElecCurrentOffsetL2 := RDM(0.63) * 0.05;
+			ElecCurrentOffsetL3 := RDM(0.46) * 0.05;
+		END_IF
+		GVL_Visu.ElCurrentL1[1] := 	ElCurrentL1Base[1][ElecSample1];
+		GVL_Visu.ElCurrentL2[1] := 	ElCurrentL1Base[1][ElecSample1];
+		GVL_Visu.ElCurrentL3[1] := 	ElCurrentL1Base[1][ElecSample1];
+	ELSE
+		ElecSample1 := 0;
+		GVL_Visu.ElCurrentL1[1] := 0;
+		GVL_Visu.ElCurrentL2[1] := 0;
+		GVL_Visu.ElCurrentL3[1] := 0;
+	END_IF
+	
+	// simulate electrical current curve of motor 2
+	IF GVL_Visu.MotorRunning[2] THEN
+		ElecSample2 := ElecSample2+1;
+		ElecSample2 := SEL(ElecSample2=60, ElecSample2, 1);
+		GVL_Visu.ElCurrentL1[2] := 	ElCurrentL1Base[2][ElecSample2];
+		GVL_Visu.ElCurrentL2[2] := 	ElCurrentL2Base[2][ElecSample2];
+		GVL_Visu.ElCurrentL3[2] := 	ElCurrentL3Base[2][ElecSample2];
+	ELSE
+		ElecSample2 := 0;
+		GVL_Visu.ElCurrentL1[2] := 0;
+		GVL_Visu.ElCurrentL2[2] := 0;
+		GVL_Visu.ElCurrentL3[2] := 0;
+	END_IF
+	
+	// simulate ambient temperature & humidity
+	GVL_Visu.AmbientTemperature := 19.0 + 2* RDM(0.7);
+	GVL_Visu.AmbientHumidity	:= 60.0 + 3 * RDM(0.5);
+	
+	// simulate pressure difference for oil contamination sensor
+	GVL_Visu.OilDiffPressure := 0.22 + RDM(0.1) * 0.2;
+  
+
+ELSE
+	GVL_Visu.LineRunning := FALSE;
+	tp1AutoMode(IN:=FALSE);
+	tp2AutoMode(IN:=FALSE);
+	
+	GVL_Visu.AutoMode := tp1AutoMode.Q;
+	
+	FOR idx := 1 TO 4 DO
+		AirValve[idx](StartSim := FALSE);
+	END_FOR
+	
+	FOR idx := 1 TO 6 DO
+		tp1Motor[idx](IN:= FALSE);
+		tp2Motor[idx](IN:= FALSE);	
+		GVL_Visu.MotorRunning[idx] := tp1Motor[idx].Q;		
+	END_FOR
+	
+	GVL_Visu.ElCurrentL1[1] := 0;
+	GVL_Visu.ElCurrentL2[1] := 0;
+	GVL_Visu.ElCurrentL3[1] := 0;
+	
+	GVL_Visu.ElCurrentL1[2] := 0;
+	GVL_Visu.ElCurrentL2[2] := 0;
+	GVL_Visu.ElCurrentL3[2] := 0;
+	
+END_IF
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

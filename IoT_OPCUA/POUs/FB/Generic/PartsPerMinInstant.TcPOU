@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PartsPerMinInstant" Id="{b50337e4-9cb8-4ee3-9f5c-6598bbf306ce}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK PartsPerMinInstant
+VAR_INPUT
+	// product total count
+	TotalCount					: UINT;
+	//Time in sec. to monitor of TotalCount changes 
+	MonitorTimeSec				: UINT := 10;
+END_VAR
+VAR_OUTPUT
+	// Parts per minut ratio
+	PPM							: UINT;
+END_VAR
+VAR
+	InitBit						:	BOOL:=TRUE;
+
+	CurrentTotalCount			: 	UINT;
+	OldTotalCount				:	UINT;
+	tonRecycle					:	TON;
+	rtrigCycleElapsed			:	R_TRIG;
+	CountDiff					:	UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+This FB calculates instantaneous parts per minute rate.
+It counts TotalCount changes within 'MonitorTimeSec' window (default 10sec).
+TotalCount 		-	 total number of counted products 
+MonitorTimeSec	-	 monitoring time in seconds
+*)
+
+IF InitBit THEN
+	CurrentTotalCount:=TotalCount;
+	InitBit:=FALSE;
+END_IF
+
+tonRecycle(IN:=NOT tonRecycle.Q, PT:=UINT_TO_TIME(MonitorTimeSec * 1000));
+rtrigCycleElapsed(CLK:=tonRecycle.Q);
+
+CurrentTotalCount := TotalCount;
+
+IF rtrigCycleElapsed.Q THEN
+	CountDiff := CurrentTotalCount - OldTotalCount;
+	OldTotalCount := CurrentTotalCount;
+END_IF
+
+// recalculate to 60 sec. (1min)
+PPM :=  TO_UINT((60.0 / TO_REAL(MonitorTimeSec)) * TO_REAL(CountDiff));
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

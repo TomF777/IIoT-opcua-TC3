@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <GVL Name="GVL_Visu" Id="{316abb3a-b9bc-4055-b1fa-f54b88477df4}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+		
+	ButtonStart 			: BOOL;
+	LineRunning				: BOOL;
+	LineProducing			: BOOL;
+	LineSpeed				: UINT := 50;
+	
+	MotorRunning			: ARRAY[1..6] OF BOOL;
+	
+	AutoMode				: BOOL;
+	
+	VibrationSensorX		: ARRAY[1..6] OF REAL;
+	VibrationSensorY		: ARRAY[1..6] OF REAL;
+	VibrationSensorZ 		: ARRAY[1..6] OF REAL;
+	VibrationSensorsEnable	: BOOL := TRUE;
+	
+	AirFlowRate				: REAL;
+	AirPressure				: REAL;
+	AirTemperature			: REAL;
+	
+	AirValve				: ARRAY[1..6] OF AirValveSimSignals;
+	AirValveEnable			: ARRAY[1..6] OF BOOL := [TRUE, TRUE, TRUE, TRUE];
+	AirValvePositionSim		: ARRAY [1..6] OF INT;
+	
+	ProductPosition			: INT;
+	SensorProductActive		: BOOL;	
+	OkProductCount			: UINT;
+	NokProductCount			: UINT;	
+	OkPartsPerMinRate		: UINT;	
+	OkPartsPerMinHistorical	: ARRAY [1..5] OF INT;
+	
+	ElCurrentL1				: ARRAY[1..2] OF REAL;
+	ElCurrentL2				: ARRAY[1..2] OF REAL;
+	ElCurrentL3				: ARRAY[1..2] OF REAL;
+	
+	AmbientTemperature		: REAL;
+	AmbientHumidity			: REAL;
+	
+	OilDiffPressure			: REAL;
+	
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

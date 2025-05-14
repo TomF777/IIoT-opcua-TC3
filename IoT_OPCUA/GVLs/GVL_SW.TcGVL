@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <GVL Name="GVL_SW" Id="{8731a2f7-e9a9-4bb0-a6e9-4fad3a28db3a}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	
+	(*Data FROM and TO Profinet IO-device*)
+	PnIoDevice_32Word_In 		: ARRAY[0..31] OF WORD;
+	PnIoDevice_32DWord_In 		: ARRAY[0..31] OF DWORD;
+	PnIoDevice_10Real_In 		: ARRAY[0..9] OF REAL;
+	PnIoDevice_10Real_Out		: ARRAY[0..9] OF REAL;
+	
+	(* Vibration sensor data *)
+	VibSensor1AccelRmsX			: REAL;		
+	VibSensor1AccelRmsY			: REAL;
+	VibSensor1AccelRmsZ			: REAL;
+	VibSensor1Temp				: REAL;
+	
+	VibSensor2AccelRmsX			: REAL;		
+	VibSensor2AccelRmsY			: REAL;
+	VibSensor2AccelRmsZ			: REAL;
+	VibSensor2Temp				: REAL;
+	
+	VibSensor3AccelRmsX			: REAL;		
+	VibSensor3AccelRmsY			: REAL;
+	VibSensor3AccelRmsZ			: REAL;
+	VibSensor3Temp				: REAL;
+	
+	VibSensor4AccelRmsX			: REAL;		 
+	VibSensor4AccelRmsY			: REAL;
+	VibSensor4AccelRmsZ			: REAL;
+	VibSensor4Temp				: REAL;
+	
+	VibSensor5AccelRmsX			: REAL;		
+	VibSensor5AccelRmsY			: REAL;
+	VibSensor5AccelRmsZ			: REAL;
+	VibSensor5Temp				: REAL;
+	
+	VibSensor6AccelRmsX			: REAL;		
+	VibSensor6AccelRmsY			: REAL;
+	VibSensor6AccelRmsZ			: REAL;
+	VibSensor6Temp				: REAL;
+	
+	
+	(* Air flow sensor data *)
+	AirMassFlowRate				: REAL;			// [kg/h]
+	AirFlowVelocity				: REAL;			// [m/s]	
+	AirVolume					: REAL;			// [m3]		
+	AirVolumetricFlowRate		: REAL;			// [ltr/min]	
+	AirMass						: REAL;			// [kg]		
+	AirEnergy					: REAL;			// [kWh]	
+	AirTemperature				: REAL;			// [°C]		
+	AirPressure					: REAL;			// [bar]	
+	
+	
+	(* Ambient environment sensor data *)
+	AmbientTempSensor			: REAL;			// [°C]
+	AmbientHumiditySensor		: REAL;			// [rel. %]
+	
+	
+	(* Level sensor data *)
+	LevelSensor					: REAL;			// [m]
+	
+	(* Contamination sensor (diff. pressure sensor *)
+	DiffPressSensor				: REAL;			// [bar]
+	
+	
+	(* TimeStamp *)
+	Unix_TimeStamp 				: ULINT;
+		
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

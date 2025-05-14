@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <DUT Name="ValveTravelTime_DataModel" Id="{65bdb741-634f-4432-9f68-5e6c323abe64}">
+    <Declaration><![CDATA[TYPE ValveTravelTime_DataModel :
+STRUCT
+
+LineName	: STRING(40);
+MachineName	: STRING(40);
+ValveName	: STRING(40);
+
+
+{attribute 'DataType' := 'STRING'}
+TimeType	: STRING(40);
+
+{attribute 'DataType' := 'INT'}
+{attribute 'Unit' := 'ms'}
+{attribute 'DisplayName' := 'Time'}
+TimeValue 	: INT;
+
+{attribute 'DataType' := 'ULINT'}
+TimeStamp : ULINT;
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
