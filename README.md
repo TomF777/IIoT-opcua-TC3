@@ -38,4 +38,4 @@ OPC client needs node reference and namespace of variable which it should reques
 These information is not directly available in TwinCat.
 The exact `NodeId` can be determined by some OPC UA browser, below example from Prosys OPC UA client:
 
-![namespace_nodeid](./docs/namespace_node.png)
+![namespace_nodeid](./docs/namespace_node.PNG)
